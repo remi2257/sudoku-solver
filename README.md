@@ -8,8 +8,9 @@ Welcome to my project
 My algorithm is using powerful IA to extract digits.
 Then, it will simply regenerate your image with the solution
 
-[imgSudoBefore][imgSudokuNotFilled]
-[imgSudoAfter][imgSudokuSolved]
+| Before             |  After |
+:-------------------------:|:-------------------------:
+![sudoku_before_solve][imgSudokuNotFilled] | ![sudoku_solved][imgSudokuSolved]
 
 ### Why is it unique ?
 Try it
@@ -28,6 +29,6 @@ Actually, I don't know
 - [ ] Video Live Solving
 
 
-[imgSudokuNotFilled]: images/sudoku.jpg
+[imgSudokuNotFilled]: https://user-images.githubusercontent.com/39727257/56866566-da6eeb00-69da-11e9-80bf-0f5eb124dce4.jpg
 
-[imgSudokuSolved]: images/sudoku_solved.jpg
+[imgSudokuSolved]: https://user-images.githubusercontent.com/39727257/56866569-ec508e00-69da-11e9-9949-baaf827d3f6e.jpg
