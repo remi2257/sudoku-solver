@@ -10,7 +10,7 @@ tf.logging.set_verbosity(tf.logging.ERROR)
 thresh_contours_low = 800
 thresh_contours_high = 3500
 offset_y = 2
-
+thresh_conf_cnn = 0.93
 
 def preprocess_im(im):
     gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
@@ -25,15 +25,16 @@ def fill_numeric_grid(preds, loc_digits, h_im, w_im):
     grid = np.zeros((9, 9), dtype=int)
 
     for pred, loc in zip(preds, loc_digits):
-        y, x = loc
-        true_y = int(9 * y // h_im)
-        true_x = int(9 * x // w_im)
-        grid[true_y, true_x] = pred
+        if pred > 0:
+            y, x = loc
+            true_y = int(9 * y // h_im)
+            true_x = int(9 * x // w_im)
+            grid[true_y, true_x] = pred
 
     return grid
 
 
-def process_extract_digits(img, model, display=False, resize=True):
+def process_extract_digits(img, model, display=False, resize=False):
     if resize:
         im = cv2.resize(img, (900, 900))
     else:
@@ -62,11 +63,19 @@ def process_extract_digits(img, model, display=False, resize=True):
 
     img_digits_np = np.array(img_digits) / 255.0
     preds_proba = model.predict(img_digits_np)
-    preds = np.argmax(preds_proba, axis=1) + 1
+
+    # preds = np.argmax(preds_proba, axis=1) + 1
+    preds = []
+    for pred_proba in preds_proba:
+        arg_max = np.argmax(pred_proba)
+        if pred_proba[arg_max] >thresh_conf_cnn:
+            preds.append(arg_max+1)
+        else :
+            preds.append(-1)
 
     grid = fill_numeric_grid(preds, loc_digits, h_im, w_im)
     if display:
-        for i in range(len(img_digits)):
+        for i in range(len(preds)):
             cv2.imshow('pred_' + str(preds[i]) + "-" + str(max(preds_proba[i])), img_digits[i])
             # cv2.waitKey()
         print(grid)
@@ -81,7 +90,7 @@ def process_extract_digits(img, model, display=False, resize=True):
 if __name__ == '__main__':
     model = load_model('model/model_99_3.h5')
 
-    im_path = "images/grid_cut1.jpg"
+    im_path = "images/sudoku1_failed.jpg"
     # im_path = "images/izi.png"
     img = cv2.imread(im_path)
     grid=process_extract_digits(img, model, display=True)
