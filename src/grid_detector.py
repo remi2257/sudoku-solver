@@ -7,7 +7,7 @@ import imutils
 def preprocess_im(gray_im):
     blurred = cv2.GaussianBlur(gray_im, (5, 5), 0)
 
-    thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 5, 2)
+    thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
     # _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     thresh_not = cv2.bitwise_not(thresh)
@@ -91,10 +91,13 @@ def look_for_intersections_hough(lines):
     return grid_limits
 
 
-size_min_contours = 100 ** 2
+# size_min_contours_ratio = 1.0/30
+size_min_contours = 100 * 2
+ratio_lim = 1.5
 
 
 def look_for_corners(img_lines, display=False):
+    # size_min_contours = size_min_contours_ratio * img_lines.shape[0] * img_lines.shape[1]
     if display:
         img_contours = np.zeros((img_lines.shape[0], img_lines.shape[1], 3), np.uint8)
     else:
@@ -102,50 +105,63 @@ def look_for_corners(img_lines, display=False):
 
     contours, _ = cv2.findContours(img_lines, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     biggest_area = 0
-    best_contour = None
+    best_contours = []
     for cnt in contours:
         area = cv2.contourArea(cnt)
-        if area > biggest_area:
+        if area > biggest_area * ratio_lim:
             peri = cv2.arcLength(cnt, True)
-            approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
-            if len(approx)==4:
-                best_contour = approx
+            approx = cv2.approxPolyDP(cnt, 0.08 * peri, True)
+            if len(approx) == 4:
+                best_contours = [approx]
                 biggest_area = area
-
+        elif area > biggest_area / ratio_lim:
+            peri = cv2.arcLength(cnt, True)
+            approx = cv2.approxPolyDP(cnt, 0.08 * peri, True)
+            if len(approx) == 4:
+                best_contours.append(approx)
         if display and area > size_min_contours:
             cv2.drawContours(img_contours, [cnt], 0, (0, 255, 0), 2)
 
-    extLeft = best_contour[best_contour[:, :, 0].argmin()][0]
-    extRight = best_contour[best_contour[:, :, 0].argmax()][0]
-    extTop = best_contour[best_contour[:, :, 1].argmin()][0]
-    extBot = best_contour[best_contour[:, :, 1].argmax()][0]
+    if not best_contours:
+        if not display:
+            return None
+        else:
+            return None, img_lines, img_contours
+    corners = []
+    for best_contour in best_contours:
+        extLeft = best_contour[best_contour[:, :, 0].argmin()][0]
+        extRight = best_contour[best_contour[:, :, 0].argmax()][0]
+        extTop = best_contour[best_contour[:, :, 1].argmin()][0]
+        extBot = best_contour[best_contour[:, :, 1].argmax()][0]
 
-    if extLeft[1] < extRight[1]:
-        top_left = extLeft
-        top_right = extTop
-        bottom_right = extRight
-        bottom_left = extBot
-    else :
-        top_left = extTop
-        top_right = extRight
-        bottom_right = extBot
-        bottom_left = extLeft
-    # cv2.waitKey()
-    corners = [top_left, top_right, bottom_right, bottom_left]
+        if extLeft[1] < extRight[1]:
+            top_left = extLeft
+            top_right = extTop
+            bottom_right = extRight
+            bottom_left = extBot
+        else:
+            top_left = extTop
+            top_right = extRight
+            bottom_right = extBot
+            bottom_left = extLeft
+        # cv2.waitKey()
+        corners.append([top_left, top_right, bottom_right, bottom_left])
     if not display:
         return corners
     else:
-        cv2.drawContours(img_contours, [best_contour], 0, (0, 0, 255), 3)
-        for point in corners:
-            x, y = point
-            cv2.circle(img_contours, (x, y), 10, (0, 255, 0), 3)
+        for best_contour in best_contours:
+            cv2.drawContours(img_contours, [best_contour], 0, (0, 0, 255), 3)
+            for corner in corners:
+                for point in corner:
+                    x, y = point
+                    cv2.circle(img_contours, (x, y), 10, (255, 0, 0), 3)
         return corners, img_lines, img_contours
 
 
 thresh_hough = 500
 thresh_hough_p = 100
 minLineLength_h_p = 0
-maxLineGap_h_p = 5
+maxLineGap_h_p = 3
 
 
 def get_hough_transform(img, edges, display=False):
@@ -170,7 +186,7 @@ def get_hough_transform(img, edges, display=False):
 
     for point in grid_limits:
         x, y = point
-        cv2.circle(img_after_merge, (x, y), 10, (0, 255, 0), 3)
+        cv2.circle(img_after_merge, (x, y), 10, (255, 0, 0), 3)
 
     if not display:
         return grid_limits
@@ -199,13 +215,22 @@ def get_p_hough_transform(img, edges, display=False):
     return look_for_corners(img_lines, display)
 
 
-def undistorted_grid(im, points_grid):
-    h_im, w_im = im.shape[:2]
-    final_pts = np.array([[0, 0], [h_im - 1, 0], [h_im - 1, w_im - 1], [0, w_im - 1]], dtype=np.float32)
-    M = cv2.getPerspectiveTransform(np.array(points_grid, dtype=np.float32), final_pts)
-    undistorted = cv2.warpPerspective(im, M, (h_im, w_im))
+target_h, target_w = 450, 450
 
-    return undistorted, M
+
+def undistorted_grids(im, points_grids, ratio):
+    undistorted = []
+    true_points_grids = []
+    for points_grid in points_grids:
+        points_grid = np.array(points_grid, dtype=np.float32)
+        # h_im, w_im = im.shape[:2]
+        # final_pts = np.array([[0, 0], [h_im - 1, 0], [h_im - 1, w_im - 1], [0, w_im - 1]], dtype=np.float32)
+        final_pts = np.array([[0, 0], [target_h - 1, 0], [target_h - 1, target_w - 1], [0, target_w - 1]],
+                             dtype=np.float32)
+        M = cv2.getPerspectiveTransform(points_grid, final_pts)
+        undistorted.append(cv2.warpPerspective(im, M, (target_w, target_h)))
+        true_points_grids.append(points_grid * ratio)
+    return undistorted, true_points_grids
 
 
 def look_for_new_grid(frame):
@@ -237,12 +262,17 @@ def main_grid_detector_video(display=False):
     cv2.destroyAllWindows()
 
 
-def main_grid_detector_img(frame, display=False):
+def main_grid_detector_img(frame, display=False, resize=False):
     # flood_fill_grid = False
     # grid = None
     use_p_hough = True
+    if not resize:
+        frame_resize = imutils.resize(frame, height=900, width=900)
+    else:
+        frame_resize = frame
+    ratio = frame.shape[0] / frame_resize.shape[0]
 
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(frame_resize, cv2.COLOR_BGR2GRAY)
     prepro_im = preprocess_im(gray)  # Good old OTSU
     # if flood_fill_grid:
     #     grid = flood_fill_grid(prepro_im)
@@ -250,32 +280,35 @@ def main_grid_detector_img(frame, display=False):
 
     if display:
         if use_p_hough:
-            extreme_points, img_lines, img_contour = get_p_hough_transform(frame.copy(), prepro_im, display)
+            extreme_points, img_lines, img_contour = get_p_hough_transform(frame_resize.copy(), prepro_im, display)
             cv2.imshow('prepro_im', prepro_im)
             cv2.imshow('img_lines', img_lines)
             cv2.imshow('img_contour', img_contour)
         else:
-            extreme_points, img_hough, img_after_merge = get_hough_transform(frame.copy(), prepro_im, display)
+            extreme_points, img_hough, img_after_merge = get_hough_transform(frame_resize.copy(), prepro_im, display)
             cv2.imshow('prepro_im', prepro_im)
             cv2.imshow('img_hough', img_hough)
             cv2.imshow('img_after_merge', img_after_merge)
     else:
         if use_p_hough:
-            extreme_points = get_p_hough_transform(frame.copy(), prepro_im)
+            extreme_points = get_p_hough_transform(frame_resize.copy(), prepro_im)
         else:
-            extreme_points = get_hough_transform(frame.copy(), prepro_im)
+            extreme_points = get_hough_transform(frame_resize.copy(), prepro_im)
 
-    grid_final, M = undistorted_grid(frame, extreme_points)
+    if extreme_points is None:
+        return None, None
 
-    return grid_final, M
+    grids_final, points_grids = undistorted_grids(frame_resize, extreme_points, ratio)
+    return grids_final, points_grids
 
 
 if __name__ == '__main__':
-    im_path = "../images/sudoku1.jpg"
+    # im_path = "../images/sudoku2.jpg"
+    im_path = "../images/imagedouble.jpg"
     im = cv2.imread(im_path)
-    if im.shape[0] > 900:
-        im = imutils.resize(im, height=900)
-    res_grid_final, _ = main_grid_detector_img(im, True)
-    cv2.imshow('grid_final', res_grid_final)
-    # cv2.imwrite('images/grid_cut1.jpg',grid_final)
+    res_grids_final, _ = main_grid_detector_img(im, True)
+    if res_grids_final is not None:
+        for (i, im_grid) in enumerate(res_grids_final):
+            cv2.imshow('grid_final_{}'.format(i), im_grid)
+            cv2.imwrite('../images/grid_cut_{}.jpg'.format(i), im_grid)
     cv2.waitKey()

@@ -11,8 +11,9 @@ Then, it will simply regenerate your image with the solution
 
 | Version | Before             |  After |
 :-------------------------:|:-------------------------:|:-------------------------:
-1.0 | ![sudoku_before_solve][imgSudoku0NotFilled] | ![sudoku_solved][imgSudoku0Solved]
-1.1 | ![sudoku_before_solve][imgSudoku1NotFilled] | ![sudoku_solved][imgSudoku1Solved]
+1.2 | ![sudo2_before][sudo_double] | ![sudo2][sudo_double_solved]
+1.1 | ![sudo1_before][imgSudoku1NotFilled] | ![sudo1][imgSudoku1Solved]
+1.0 | ![sudo0_before][imgSudoku0NotFilled] | ![sudo0][imgSudoku0Solved]
 
 ### Why is it unique ?
 Try it, you will see
@@ -42,9 +43,13 @@ I will try to optimise each part of the process starting by the grid solving
 
 ### VERSION LIST
 
+- v1.2 : Multiple grids baby !
 - v1.1 : Use probabilistic Hough & detect grid better
 - v1.0 : First version
 
+
+[sudo_double]: https://user-images.githubusercontent.com/39727257/57106087-d5889f00-6d2c-11e9-805f-350233fed9bc.jpg
+[sudo_double_solved]: https://user-images.githubusercontent.com/39727257/57106093-d91c2600-6d2c-11e9-95da-c739bb21131e.jpg
 [imgSudoku0NotFilled]: https://user-images.githubusercontent.com/39727257/56866566-da6eeb00-69da-11e9-80bf-0f5eb124dce4.jpg
 [imgSudoku0Solved]: https://user-images.githubusercontent.com/39727257/56866569-ec508e00-69da-11e9-9949-baaf827d3f6e.jpg
 [imgSudoku1NotFilled]: https://user-images.githubusercontent.com/39727257/57035511-89692c00-6c52-11e9-852f-34acd3ed28e4.jpg

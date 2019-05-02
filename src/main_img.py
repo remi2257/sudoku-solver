@@ -1,4 +1,4 @@
-from src.grid_solver import main_solve_grid
+from src.grid_solver import main_solve_grids
 from src.grid_detector import main_grid_detector_img
 from src.extract_digits import process_extract_digits
 from src.new_img_generator import *
@@ -8,62 +8,85 @@ from keras.models import load_model
 import tensorflow as tf
 import sys
 import time
+import imutils
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 tf.logging.set_verbosity(tf.logging.ERROR)
 
 
 def main_process_img(im_path, save=False):
+    resize = False
     init = time.time()
     model = load_model('model/model_99_3.h5')
     frame = cv2.imread(im_path)
+    if frame.shape[0] > 1000:
+        frame = imutils.resize(frame, height=900, width=900)
+        resize = True
     init0 = time.time()
     if frame is None:
         print("This path doesn't lead to a frame")
         sys.exit(3)
-    im_grid_final, M = main_grid_detector_img(frame)
+    im_grids_final, points_grids = main_grid_detector_img(frame, resize=resize)
     found_grid_time = time.time()
-    grid = process_extract_digits(im_grid_final, model)
+    if im_grids_final is None:
+        print("No grid found")
+        sys.exit(3)
+    grids_matrix = process_extract_digits(im_grids_final, model)
+    if not grids_matrix :
+        print("Failed during extraction")
+        sys.exit(3)
     extract_time = time.time()
-    grid_solved = main_solve_grid(grid)
+    grids_solved = main_solve_grids(grids_matrix)
 
-    if grid_solved is None:
-        cv2.imshow('grid_extract', im_grid_final)
-        cv2.imwrite(os.path.splitext(im_path)[0] + "_failed.jpg", im_grid_final)
+    if grids_solved is None:
+        cv2.imshow('grid_extract', im_grids_final[0])
+        cv2.imwrite(os.path.splitext(im_path)[0] + "_failed.jpg", im_grids_final[0])
         cv2.waitKey()
         sys.exit(3)
 
     solve_time = time.time()
 
-    im_filled_grid = write_solved_grid(im_grid_final, grid, grid_solved)
-    im_final = recreate_img(frame, im_filled_grid, M)
+    ims_filled_grid = write_solved_grids(im_grids_final, grids_matrix, grids_solved)
+    im_final = recreate_img_filled(frame, ims_filled_grid, points_grids)
     final_time = time.time()
 
     if save:
+        # cv2.imwrite(os.path.splitext(im_path)[0] + "_solved.jpg", imutils.resize(im_final,height=600))
         cv2.imwrite(os.path.splitext(im_path)[0] + "_solved.jpg", im_final)
 
-    else:
-        total_time = final_time - init
+    total_time = final_time - init
 
-        load_time = init0 - init
-        print("Load everything \t{:.1f}% - {:.3f}s".format(100*load_time/total_time,load_time))
-        founding_time = found_grid_time - init0
-        print("Grid Research \t\t{:.1f}% - {:.3f}s".format(100*founding_time/total_time,founding_time))
-        extraction_duration = extract_time - found_grid_time
-        print("Digits Extraction \t{:.1f}% - {:.3f}s".format(100*extraction_duration/total_time,extraction_duration))
-        solving_duration = solve_time - extract_time
-        print("Grid Solving \t\t{:.1f}% - {:.3f}s".format(100*solving_duration/total_time,solving_duration))
-        recreation_duration  = final_time - solve_time
-        print("Image recreation \t{:.1f}% - {:.3f}s".format(100*recreation_duration/total_time,recreation_duration))
-        print("EVERYTHING DONE \t{:.2f}s".format(total_time))
-        print(grid_solved)
+    load_time = init0 - init
+    print("Load everything \t{:.1f}% - {:.3f}s".format(100 * load_time / total_time, load_time))
+    founding_time = found_grid_time - init0
+    print("Grid Research \t\t{:.1f}% - {:.3f}s".format(100 * founding_time / total_time, founding_time))
+    extraction_duration = extract_time - found_grid_time
+    print(
+        "Digits Extraction \t{:.1f}% - {:.3f}s".format(100 * extraction_duration / total_time, extraction_duration))
+    solving_duration = solve_time - extract_time
+    print("Grid Solving \t\t{:.1f}% - {:.3f}s".format(100 * solving_duration / total_time, solving_duration))
+    recreation_duration = final_time - solve_time
+    print(
+        "Image recreation \t{:.1f}% - {:.3f}s".format(100 * recreation_duration / total_time, recreation_duration))
+    print("EVERYTHING DONE \t{:.2f}s".format(total_time))
+    # print(grid)
+    # print(grid_solved)
+
+    if len(ims_filled_grid) == 1:
         cv2.imshow('im', frame)
-        cv2.imshow('grid_extract', im_grid_final)
-        cv2.imshow('grid_filled', im_filled_grid)
-        cv2.imshow('im_final', im_final)
-        cv2.waitKey()
+        cv2.imshow('grid_extract', im_grids_final[0])
+        cv2.imshow('grid_filled', ims_filled_grid[0])
+    cv2.imshow('im_final', im_final)
+    cv2.waitKey()
 
 
 if __name__ == '__main__':
-    im_path = "images/sudoku1.jpg"
-    main_process_img(im_path,save=False)
+    im_paths = [
+        "images/sudoku.jpg",
+        "images/sudoku1.jpg",
+        "images/sudoku2.jpg",
+        "images/izi_distord.jpg",
+        "images/imagedouble.jpg",  # 4
+    ]
+    im_path = im_paths[4]
+    main_process_img(im_path, save=True)
