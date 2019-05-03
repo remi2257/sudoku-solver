@@ -1,19 +1,19 @@
 # sudoku-solver
-This stuff just resolve sudoku one finger in the nose
+This stuff just resolve sudokus one finger in the nose
 
-Hi, my name is Rémi Lux. I'm currently an intern at Bertin IT, 
-a society known for its main product : Media Centric.  
+Hi, my name is Rémi Lux. I'm currently in my final year of Computer Vision Degree.
 Welcome to my project
 
 ### What is it doing ?
 My algorithm is using powerful IA to extract digits.
 Then, it will simply regenerate your image with the solution
 
-| Version | Before             |  After |
+
+| Version | Original Picture      |  Algorithm Output |
 :-------------------------:|:-------------------------:|:-------------------------:
-1.2 | ![sudo2_before][sudo_double] | ![sudo2][sudo_double_solved]
-1.1 | ![sudo1_before][imgSudoku1NotFilled] | ![sudo1][imgSudoku1Solved]
-1.0 | ![sudo0_before][imgSudoku0NotFilled] | ![sudo0][imgSudoku0Solved]
+1.2 | <img src="https://user-images.githubusercontent.com/39727257/57106087-d5889f00-6d2c-11e9-805f-350233fed9bc.jpg" width="400"/> | <img src="https://user-images.githubusercontent.com/39727257/57106093-d91c2600-6d2c-11e9-95da-c739bb21131e.jpg" width="400"/>
+1.1 | <img src="https://user-images.githubusercontent.com/39727257/57035511-89692c00-6c52-11e9-852f-34acd3ed28e4.jpg" width="400"/> | <img src="https://user-images.githubusercontent.com/39727257/57035569-abfb4500-6c52-11e9-9dd2-c7ca6e954a3f.jpg" width="400"/>
+1.0 | <img src="https://user-images.githubusercontent.com/39727257/56866566-da6eeb00-69da-11e9-80bf-0f5eb124dce4.jpg" width="400"/> | <img src="https://user-images.githubusercontent.com/39727257/56866569-ec508e00-69da-11e9-9949-baaf827d3f6e.jpg" width="400"/>
 
 ### Why is it unique ?
 Try it, you will see
