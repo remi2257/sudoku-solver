@@ -17,7 +17,7 @@ def create_csv(data_path):
     folders_list = [folder for folder in folders_list if not folder.endswith(tuple(["train", "test"]))]
     folders_list = sorted(folders_list, key=lambda x: int(os.path.basename(x)[0]))
     # df = pd.DataFrame({"label": [],
-    #                    "images": []})
+    #                    "images_test": []})
     columns = ['label'] + ["pixel" + str(i) for i in range(img_size)]
     df = pd.DataFrame(columns=columns)
 
@@ -49,7 +49,7 @@ def create_csv_seperated(data_path):
     folders_test = [folder for folder in folders_list if folder.endswith("test")]
     folders_test = sorted(folders_test, key=lambda x: int(os.path.basename(x)[0]))
     # df = pd.DataFrame({"label": [],
-    #                    "images": []})
+    #                    "images_test": []})
     columns = ['label'] + ["pixel" + str(i) for i in range(img_size)]
     df = pd.DataFrame(columns=columns)
 
@@ -73,7 +73,7 @@ def create_csv_seperated(data_path):
     df.to_csv(dataset_path + 'minst_train.csv')
 
     # df = pd.DataFrame({"label": [],
-    #                    "images": []})
+    #                    "images_test": []})
     columns = ['label'] + ["pixel" + str(i) for i in range(img_size)]
     df = pd.DataFrame(columns=columns)
 
@@ -130,4 +130,4 @@ if __name__ == '__main__':
         seperate_dataset(dataset_path)
         create_csv_seperated(dataset_path)
     else:
-        create_csv_(dataset_path)
+        create_csv(dataset_path)

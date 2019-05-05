@@ -21,6 +21,8 @@ def recreate_img_filled(frame, im_grids, points_grids):
     target_h, target_w = frame.shape[:2]
     im_final = frame.copy()
     for im_grid, points_grid in zip(im_grids, points_grids):
+        if im_grid is None:
+            continue
         grid_h, grid_w = im_grid.shape[:2]
         init_pts = np.array([[0, 0], [grid_h - 1, 0], [grid_h - 1, grid_w - 1], [0, grid_w - 1]], dtype=np.float32)
         M = cv2.getPerspectiveTransform(init_pts, points_grid)
@@ -34,6 +36,9 @@ def recreate_img_filled(frame, im_grids, points_grids):
 def write_solved_grids(frames, grids_matrix, solved_grids):
     ims_filled_grid = []
     for frame, grid_init, solved_grid in zip(frames, grids_matrix, solved_grids):
+        if solved_grid is None:
+            ims_filled_grid.append(None)
+            continue
         im_filled_grid = np.zeros_like(frame)
         h_im, w_im = frame.shape[:2]
         for y in range(9):
@@ -54,7 +59,7 @@ def write_solved_grids(frames, grids_matrix, solved_grids):
 
 
 if __name__ == '__main__':
-    im_path = "images/grid_cut1.jpg"
+    im_path = "../images_test/grid_cut_3.jpg"
     img = cv2.imread(im_path)
     img = cv2.resize(img, (450, 450))
     my_grid_init = [[0, 0, 0, 9, 0, 0, 7, 0, 0]
@@ -76,6 +81,7 @@ if __name__ == '__main__':
         , [1, 7, 8, 4, 6, 3, 9, 2, 5]
         , [6, 2, 5, 7, 9, 1, 3, 8, 4]
         , [3, 9, 4, 2, 5, 8, 1, 6, 7]]
-    res_im_filled_grid = write_solved_grids(img, np.array(my_grid_init), np.array(my_solved_grid))
-    cv2.imshow("im", res_im_filled_grid)
+    res_im_filled_grid = write_solved_grids([img], [np.array(my_grid_init)], np.array([my_solved_grid]))
+    cv2.imshow("im", img)
+    cv2.imshow("im_fill", res_im_filled_grid[0])
     cv2.waitKey()

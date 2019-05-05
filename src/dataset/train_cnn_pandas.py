@@ -13,7 +13,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 import itertools
 
-# from keras.callbacks import ReduceLROnPlateau
+import tensorflow as tf
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+tf.logging.set_verbosity(tf.logging.ERROR)
 
 # import matplotlib.image as mpimg
 # import seaborn as sns
@@ -21,16 +24,14 @@ import itertools
 # np.random.seed(2)
 
 
-
-
-handwritten = True
+handwritten = False
 include_zero = handwritten
 nbr_classes = 9 + int(include_zero)
 if handwritten:
     epochs = 4
     batch_size = 86
 else:
-    epochs = 8
+    epochs = 20
     batch_size = 32  # 86
 
 datagen = ImageDataGenerator(
@@ -39,12 +40,12 @@ datagen = ImageDataGenerator(
     featurewise_std_normalization=False,  # divide inputs by std of the dataset
     samplewise_std_normalization=False,  # divide each input by its std
     zca_whitening=False,  # apply ZCA whitening
-    rotation_range=10,  # randomly rotate images in the range (degrees, 0 to 180)
-    zoom_range=0.1,  # Randomly zoom image
-    width_shift_range=0.1,  # randomly shift images horizontally (fraction of total width)
-    height_shift_range=0.1,  # randomly shift images vertically (fraction of total height)
-    horizontal_flip=False,  # randomly flip images
-    vertical_flip=False)  # randomly flip images
+    rotation_range=5,  # randomly rotate images_test in the range (degrees, 0 to 180)
+    zoom_range=[0.5, 1.2],  # Randomly zoom image
+    width_shift_range=0.2,  # randomly shift images_test horizontally (fraction of total width)
+    height_shift_range=0.2,  # randomly shift images_test vertically (fraction of total height)
+    horizontal_flip=False,  # randomly flip images_test
+    vertical_flip=False)  # randomly flip images_test
 
 # Set a learning rate annealer
 learning_rate_reduction = ReduceLROnPlateau(monitor='val_acc',
@@ -125,7 +126,7 @@ def CNN_model():
     return model
 
 
-def load_data(data_path, handwritten=False):
+def load_data_split(data_path, handwritten=False):
     train_path = os.path.join(data_path, "mnist_train.csv")
     test_path = os.path.join(data_path, "mnist_test.csv")
     if handwritten:
@@ -155,26 +156,56 @@ def load_data(data_path, handwritten=False):
     return xtrain / 255.0, ytrain, xtest / 255.0, ytest
 
 
+def load_data(data_path, handwritten=False):
+    dataset_path = os.path.join(data_path, "minst_train_test.csv")
+    if handwritten:
+        train = pd.read_csv(dataset_path)
+    else:
+        train = pd.read_csv(dataset_path, index_col=0)
+
+    train = train.sample(frac=1).reset_index(drop=True)
+
+    xtrain = train.drop(labels=["label"], axis=1)
+    ytrain = train["label"] - min(train["label"].values)
+
+    xtrain = xtrain.values.reshape(-1, 28, 28, 1)
+    ytrain = to_categorical(ytrain, num_classes=nbr_classes)
+
+    return xtrain / 255.0, ytrain
+
+
 if __name__ == '__main__':
+    continue_train = True
     train = True
     data_augmentation = True
     separate = False
+    already_split = False
     if handwritten:
         dataset_path = "/media/hdd_linux/DataSet/mnist_handwritten/"
 
     else:
         dataset_path = "/media/hdd_linux/DataSet/mnist_numeric/"
 
-    x_train, y_train, x_test, y_test = load_data(dataset_path, handwritten)
+    if already_split:
+        x_train, y_train, x_test, y_test = load_data_split(dataset_path, handwritten)
+    else:
+        X, Y = load_data(dataset_path, handwritten)
+        x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)  # , random_state=2
 
-    if train:
-        models_path = 'model/'
-        new_model_name = "{}model_{}.h5".format(models_path, len(os.listdir(models_path)))
-        model = CNN_model()
+    if continue_train or train:
 
-        # X_train, X_val, Y_train, Y_val = train_test_split(x_train, y_train, test_size=0.1, random_state=2)
+        if continue_train:
+            from keras.models import load_model
+            models_path = '../../model/'
+            model_name = "{}model_1.h5".format(models_path, len(os.listdir(models_path)))
+            model = load_model(model_name)
+            epochs /= 2
 
-        if data_augmentation:
+        else:
+            models_path = '../../model/'
+            model = CNN_model()
+
+        if not data_augmentation:
             history = model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, verbose=1,
                                 validation_data=(x_test, y_test))  # validation_data=(X_val, Y_val)
 
@@ -183,9 +214,10 @@ if __name__ == '__main__':
             # Fit the model
             history = model.fit_generator(datagen.flow(x_train, y_train, batch_size=batch_size),
                                           epochs=epochs, validation_data=(x_test, y_test),
-                                          verbose=2, steps_per_epoch=x_train.shape[0] // batch_size
+                                          verbose=1, steps_per_epoch=x_train.shape[0] // batch_size
                                           , callbacks=[learning_rate_reduction])
 
+        new_model_name = "{}model_{}.h5".format(models_path, len(os.listdir(models_path)))
         model.save(new_model_name)
 
         # Predict the values from the validation dataset
@@ -201,13 +233,13 @@ if __name__ == '__main__':
         plot_history(history)
         plt.show()
 
-    else:
-        from keras.models import load_model
-
-        models_path = 'model/'
-        new_model_name = "{}model_{}.h5".format(models_path, len(os.listdir(models_path)) - 1)
-
-        print(y_train[7000])
-        plt.imshow(x_train[7000].reshape(28, 28))
-        # print(x_train[0][:,:,0])
-        plt.show()
+    # else:
+    #     from keras.models import load_model
+    #
+    #     models_path = 'model/'
+    #     new_model_name = "{}model_{}.h5".format(models_path, len(os.listdir(models_path)) - 1)
+    #
+    #     print(y_train[7000])
+    #     plt.imshow(x_train[7000].reshape(28, 28))
+    #     print(x_train[0][:,:,0])
+    #     plt.show()

@@ -117,6 +117,7 @@ class Sudoku:
                 return False
 
         return True
+
     '''
     def verify_new_result(self, my_zip):
         for x, y in my_zip:
@@ -135,6 +136,7 @@ class Sudoku:
         return True
 
     '''
+
     def should_make_hypothesis(self):
         return 1 not in self.count_possible_grid
 
@@ -157,7 +159,7 @@ class Sudoku:
         return best_x, best_y, self.possible_values_grid[best_y, best_x]
 
     def verify_result(self):
-        ok = True
+        # ok = True
         for y in range(9):
             for x in range(9):
                 grid = copy.deepcopy(self.grid)
@@ -170,7 +172,30 @@ class Sudoku:
                 square = grid[y1:y2, x1:x2]
                 val = self.grid[y, x]
                 if val in line or val in column or val in square:
-                    print(x, y)
-                    ok = False
+                    # print(x, y)
+                    # ok = False
+                    return False
 
-        return ok
+        return True
+        # return ok
+
+
+def verify_viable_grid(grid_tested):
+    for y in range(9):
+        for x in range(9):
+            if grid_tested[y, x] == 0:
+                continue
+            grid = copy.deepcopy(grid_tested)
+            grid[y, x] = 0
+            line = grid[y, :]
+            column = grid[:, x]
+            x1 = 3 * (x // 3)
+            y1 = 3 * (y // 3)
+            x2, y2 = x1 + 3, y1 + 3
+            square = grid[y1:y2, x1:x2]
+            val = grid_tested[y, x]
+            if val in line or val in column or val in square:
+                # print("Unviable Grid")
+                return False
+
+    return True

@@ -1,5 +1,5 @@
 from src.grid_solver import main_solve_grids
-from src.grid_detector import main_grid_detector_img
+from src.grid_detector_img import main_grid_detector_img
 from src.extract_digits import process_extract_digits
 from src.new_img_generator import *
 import os
@@ -8,39 +8,43 @@ from keras.models import load_model
 import tensorflow as tf
 import sys
 import time
-import imutils
+# import imutils
+from src.fonctions import resize
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 tf.logging.set_verbosity(tf.logging.ERROR)
+save_path = "images_save/"
 
 
-def main_process_img(im_path, save=False):
-    resize = False
+def main_process_img(im_path, save=False, display=False):
+    resized = False
     init = time.time()
-    model = load_model('model/model_99_3.h5')
-    frame = cv2.imread(im_path)
-    if frame.shape[0] > 1000:
-        frame = imutils.resize(frame, height=900, width=900)
-        resize = True
+    model = load_model('model/my_model.h5')
+    frame = cv2.imread(im_path)  # TODO Check if image not well oriented - EXIF data
     init0 = time.time()
     if frame is None:
         print("This path doesn't lead to a frame")
         sys.exit(3)
-    im_grids_final, points_grids = main_grid_detector_img(frame, resize=resize)
+    if frame.shape[0] > 1000:
+        # frame = imutils.resize(frame, height=900, width=900)
+        frame = resize(frame, height=900, width=900)
+        resized = True
+    im_grids_final, points_grids = main_grid_detector_img(frame, resized=resized)
     found_grid_time = time.time()
     if im_grids_final is None:
         print("No grid found")
         sys.exit(3)
-    grids_matrix = process_extract_digits(im_grids_final, model)
-    if not grids_matrix :
+    grids_matrix = process_extract_digits(im_grids_final, model, display=display)
+    if all(elem is None for elem in grids_matrix):
         print("Failed during extraction")
         sys.exit(3)
     extract_time = time.time()
     grids_solved = main_solve_grids(grids_matrix)
 
     if grids_solved is None:
+        print(grids_matrix)
         cv2.imshow('grid_extract', im_grids_final[0])
-        cv2.imwrite(os.path.splitext(im_path)[0] + "_failed.jpg", im_grids_final[0])
+        cv2.imwrite(save_path + os.path.splitext(os.path.basename(im_path))[0] + "_failed.jpg", im_grids_final[0])
         cv2.waitKey()
         sys.exit(3)
 
@@ -52,7 +56,7 @@ def main_process_img(im_path, save=False):
 
     if save:
         # cv2.imwrite(os.path.splitext(im_path)[0] + "_solved.jpg", imutils.resize(im_final,height=600))
-        cv2.imwrite(os.path.splitext(im_path)[0] + "_solved.jpg", im_final)
+        cv2.imwrite(save_path + os.path.splitext(os.path.basename(im_path))[0] + "_solved.jpg", im_final)
 
     total_time = final_time - init
 
@@ -82,11 +86,13 @@ def main_process_img(im_path, save=False):
 
 if __name__ == '__main__':
     im_paths = [
-        "images/sudoku.jpg",
-        "images/sudoku1.jpg",
-        "images/sudoku2.jpg",
-        "images/izi_distord.jpg",
-        "images/imagedouble.jpg",  # 4
+        "images_test/sudoku.jpg",
+        "images_test/sudoku1.jpg",
+        "images_test/sudoku2.jpg",
+        "images_test/izi_distord.jpg",
+        "images_test/imagedouble.jpg",  # 4
+        "images_test/sudoku5.jpg",
+        "dataset_test/076.jpg",
     ]
-    im_path = im_paths[4]
-    main_process_img(im_path, save=True)
+    im_path = im_paths[5]
+    main_process_img(im_path, save=True, display=False)

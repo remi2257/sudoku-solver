@@ -34,14 +34,20 @@ def main_solve_grids(grids):
     has_resolve_grid = False
     finished_grids = []
     for grid in grids:
+        if grid is None:
+            finished_grids.append(None)
+            continue
         sudo = Sudoku(grid=grid)
         ret, finished_sudo = solve_grid(sudo)
         if ret:
             finished_grids.append(finished_sudo.grid)
             has_resolve_grid = True
         else:
-            print("Failed during solving")
-            # return None
+            finished_grids.append(None)
+
+        # else:
+        #     print("Failed during solving")
+        #     # return None
     if has_resolve_grid:
         return finished_grids
     return None
