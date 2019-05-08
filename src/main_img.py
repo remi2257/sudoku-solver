@@ -29,7 +29,7 @@ def main_process_img(im_path, save=False, display=False):
         # frame = imutils.resize(frame, height=900, width=900)
         frame = resize(frame, height=900, width=900)
         resized = True
-    im_grids_final, points_grids = main_grid_detector_img(frame, resized=resized)
+    im_grids_final, points_grids = main_grid_detector_img(frame,display=display, resized=resized)
     found_grid_time = time.time()
     if im_grids_final is None:
         print("No grid found")
@@ -92,7 +92,9 @@ if __name__ == '__main__':
         "images_test/izi_distord.jpg",
         "images_test/imagedouble.jpg",  # 4
         "images_test/sudoku5.jpg",
-        "dataset_test/076.jpg",
+        "images_test/sudoku6.jpg",
+        "dataset_test/076.jpg", # 7
+        "images_test/video_stop.png", # 8
     ]
-    im_path = im_paths[5]
-    main_process_img(im_path, save=True, display=False)
+    im_path = im_paths[8]
+    main_process_img(im_path, save=False, display=True)

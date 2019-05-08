@@ -48,12 +48,15 @@ def show_trackbar(gray_enhance):
     show_thresh(gray_enhance)
 
 
-def preprocess_im(im):
-    gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+def preprocess_im(im, is_gray=False):
+    if is_gray:
+        gray = im
+    else:
+        gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
     gray_enhance = (gray - gray.min()) * int(255 / (gray.max() - gray.min()))
     blurred = cv2.GaussianBlur(gray_enhance, (3, 3), 0)
     thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 43, 12)
-    # show_trackbar(gray_enhance)
+    # show_trackbar_adap_thresh(gray_enhance)
 
     return thresh, gray_enhance
 
@@ -123,9 +126,10 @@ thresh_area_high = 900
 l_case = 45
 l_border = 1
 offset_y = 2
+min_digits_extracted = 20
 
 
-def process_extract_digits(ims, model, display=False):
+def process_extract_digits(ims, model, display=False,display_digit = False):
     # if resize:
     #     im = cv2.resize(img, (450, 450))
     # else:
@@ -133,7 +137,6 @@ def process_extract_digits(ims, model, display=False):
     grids = []
     for im in ims:
         h_im, w_im = im.shape[:2]
-
         im_prepro, gray_enhance = preprocess_im(im)
         im_contours = im.copy()
         contours, _ = cv2.findContours(im_prepro, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -160,20 +163,26 @@ def process_extract_digits(ims, model, display=False):
                 loc_digits.append([(y1 + y2) / 2, (x1 + x2) / 2])
         img_digits_np = np.array(img_digits) / 255.0
         if not img_digits:
+            grids.append(None)
             continue
         preds_proba = model.predict(img_digits_np)
 
         # preds = np.argmax(preds_proba, axis=1) + 1
         preds = []
+        nbr_digits_extracted = 0
         for pred_proba in preds_proba:
             arg_max = np.argmax(pred_proba)
             if pred_proba[arg_max] > thresh_conf_cnn:
                 preds.append(arg_max + 1)
+                nbr_digits_extracted += 1
             else:
                 preds.append(-1)
 
+        if nbr_digits_extracted < min_digits_extracted:
+            grids.append(None)
+            continue
         grid = fill_numeric_grid(preds, loc_digits, h_im, w_im)
-        if display:
+        if display_digit:
             for i in range(len(preds)):
                 cv2.imshow('pred_' + str(preds[i]) + "-" + str(max(preds_proba[i])), img_digits[i])
             print(grid)

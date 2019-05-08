@@ -5,7 +5,11 @@ from src.MyHoughPLines import *
 from src.fonctions import resize
 
 
-def show_thresh(gray_enhance):
+def nothing(x):
+    pass
+
+
+def show_thresh_adaptive(gray_enhance):
     while (1):
         cv2.imshow('image', gray_enhance)
 
@@ -30,22 +34,66 @@ def show_thresh(gray_enhance):
             break
 
 
-def show_trackbar(gray_enhance):
+def show_hough(edges):
+    cv2.imshow("edges", resize(edges, width=900))
+    # old_values = [-1,-1,-1]
+    while (1):
+        # get current positions of four trackbars
+        A = cv2.getTrackbarPos('thresh', 'track')
+        B = cv2.getTrackbarPos('minLineLength', 'track')
+        C = cv2.getTrackbarPos('maxLineGa', 'track')
+        my_lines = []
+        img_lines = np.zeros((edges.shape[:2]), np.uint8)
+        lines_raw = cv2.HoughLinesP(edges, rho=1, theta=np.pi / 180, threshold=A,
+                                    minLineLength=B, maxLineGap=C)
+
+        for line in lines_raw:
+            my_lines.append(MyHoughPLines(line))
+
+        for line in my_lines:
+            x1, y1, x2, y2 = line.get_limits()
+            cv2.line(img_lines, (x1, y1), (x2, y2), 255, 2)
+
+        img_binary_lines = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+        for line in my_lines:
+            x1, y1, x2, y2 = line.get_limits()
+            cv2.line(img_binary_lines, (x1, y1), (x2, y2), (0, 0, 255), 2)
+
+        cv2.imshow('img_lines', resize(img_lines, width=900))
+        cv2.imshow('img_binary_lines', resize(img_binary_lines, width=900))
+        k = cv2.waitKey(10) & 0xFF
+        if k == 27:
+            break
+
+
+def show_trackbar_adap_thresh(gray_enhance):
     max_block = 40
     max_mean = 20
     cv2.namedWindow('track')
-    cv2.createTrackbar('B1', 'track', 10, max_block, show_thresh)
-    cv2.createTrackbar('M1', 'track', 13, max_mean, show_thresh)
-    cv2.createTrackbar('B', 'track', 10, max_block, show_thresh)
-    cv2.createTrackbar('M', 'track', 13, max_mean, show_thresh)
-    cv2.createTrackbar('M/G', 'track', 0, 1, show_thresh)
-    show_thresh(gray_enhance)
+    cv2.createTrackbar('B1', 'track', 10, max_block, nothing)
+    cv2.createTrackbar('M1', 'track', 13, max_mean, nothing)
+    cv2.createTrackbar('B', 'track', 10, max_block, nothing)
+    cv2.createTrackbar('M', 'track', 13, max_mean, nothing)
+    cv2.createTrackbar('M/G', 'track', 0, 1, nothing)
+    show_thresh_adaptive(gray_enhance)
 
 
-def preprocess_im(frame_resize):
-    gray = cv2.cvtColor(frame_resize, cv2.COLOR_BGR2GRAY)
+def show_trackbar_hough(edges):
+    max_thresh = 300
+    max_maxLineGap = 20
+    max_minLineLength = 20
+    cv2.namedWindow('track')
+    cv2.createTrackbar('thresh', 'track', 100, max_thresh, nothing)
+    cv2.createTrackbar('minLineLength', 'track', 0, max_minLineLength, nothing)
+    cv2.createTrackbar('maxLineGa', 'track', 4, max_maxLineGap, nothing)
+    show_hough(edges)
+
+
+def preprocess_im(frame):
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
     gray_enhance = (gray - gray.min()) * int(255 / (gray.max() - gray.min()))
-    # show_trackbar(gray_enhance)
+    # show_trackbar_adap_thresh(gray_enhance)
     blurred = cv2.GaussianBlur(gray_enhance, (5, 5), 0)
 
     thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 21, 7)
@@ -158,7 +206,8 @@ def find_corners(contour):
 
 # size_min_contours_ratio = 1.0/30
 ratio_lim = 1.5
-smallest_area = 80000
+smallest_area = 75000
+approx_poly_coef = 0.1
 
 
 def look_for_corners(img_lines, display=False):
@@ -177,13 +226,13 @@ def look_for_corners(img_lines, display=False):
             continue
         if area > biggest_area * ratio_lim:
             peri = cv2.arcLength(cnt, True)
-            approx = cv2.approxPolyDP(cnt, 0.08 * peri, True)
+            approx = cv2.approxPolyDP(cnt, approx_poly_coef * peri, True)
             if len(approx) == 4:
                 best_contours = [approx]
                 biggest_area = area
         elif area > biggest_area / ratio_lim:
             peri = cv2.arcLength(cnt, True)
-            approx = cv2.approxPolyDP(cnt, 0.08 * peri, True)
+            approx = cv2.approxPolyDP(cnt, approx_poly_coef * peri, True)
             if len(approx) == 4:
                 best_contours.append(approx)
         if display:
@@ -211,8 +260,28 @@ def look_for_corners(img_lines, display=False):
 
 thresh_hough = 500
 thresh_hough_p = 100
-minLineLength_h_p = 0
-maxLineGap_h_p = 4
+minLineLength_h_p = 5
+maxLineGap_h_p = 5
+# display_line_on_edges = True
+display_line_on_edges = False
+
+
+def get_p_hough_transform(img, edges, display=False):
+    my_lines = []
+    img_lines = np.zeros((img.shape[:2]), np.uint8)
+    lines_raw = cv2.HoughLinesP(edges, rho=1, theta=np.pi / 180, threshold=thresh_hough_p,
+                                minLineLength=minLineLength_h_p, maxLineGap=maxLineGap_h_p)
+    for line in lines_raw:
+        my_lines.append(MyHoughPLines(line))
+
+    for line in my_lines:
+        x1, y1, x2, y2 = line.get_limits()
+        cv2.line(img_lines, (x1, y1), (x2, y2), 255, 2)
+    # cv2.imshow('img_lines', img_lines)
+    # cv2.waitKey()
+    if display_line_on_edges:
+        show_trackbar_hough(edges)
+    return look_for_corners(img_lines, display)
 
 
 def get_hough_transform(img, edges, display=False):
@@ -245,27 +314,6 @@ def get_hough_transform(img, edges, display=False):
         return grid_limits, img, img_after_merge
 
 
-def get_p_hough_transform(img, edges, display=False):
-    my_lines = []
-    img_binary_lines = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
-    img_lines = np.zeros((img.shape[:2]), np.uint8)
-    lines_raw = cv2.HoughLinesP(edges, 1, np.pi / 180, thresh_hough_p, minLineLength_h_p, maxLineGap_h_p)
-    for line in lines_raw:
-        my_lines.append(MyHoughPLines(line))
-
-    for line in my_lines:
-        x1, y1, x2, y2 = line.get_limits()
-        cv2.line(img_lines, (x1, y1), (x2, y2), 255, 2)
-    # cv2.imshow('img_lines', img_lines)
-    # cv2.waitKey()
-    if display:
-        for line in my_lines:
-            x1, y1, x2, y2 = line.get_limits()
-            cv2.line(img_binary_lines, (x1, y1), (x2, y2), (0, 0, 255), 2)
-
-    return look_for_corners(img_lines, display)
-
-
 target_h, target_w = 450, 450
 
 
@@ -290,14 +338,13 @@ def main_grid_detector_img(frame, display=False, resized=False):
     # flood_fill_grid = False
     # grid = None
     use_p_hough = True
+    # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     if not resized:
-        # frame_resize = imutils.resize(frame, height=900, width=900)
         frame_resize = resize(frame, height=900, width=900)
     else:
         frame_resize = frame
     ratio = frame.shape[0] / frame_resize.shape[0]
-
-    prepro_im = preprocess_im(frame_resize)  # Good old OTSU
+    prepro_im = preprocess_im(frame_resize)
     # if flood_fill_grid:
     #     grid = flood_fill_grid(prepro_im)
     # canny = cv2.Canny(frame, 50, 150)
@@ -329,8 +376,10 @@ def main_grid_detector_img(frame, display=False, resized=False):
 
 
 if __name__ == '__main__':
-    im_path = "../dataset_test/115.jpg"
+    # im_path = "../dataset_test/115.jpg"
     # im_path = "../images_test/sudoku5.jpg"
+    # im_path = "../images_test/sudoku6.jpg"
+    im_path = "../images_test/video_stop.png"
     # im_path = "../images_test/imagedouble.jpg"
     im = cv2.imread(im_path)
 
@@ -338,5 +387,5 @@ if __name__ == '__main__':
     if res_grids_final is not None:
         for (i, im_grid) in enumerate(res_grids_final):
             cv2.imshow('grid_final_{}'.format(i), im_grid)
-            cv2.imwrite('../images_test/grid_cut_{}.jpg'.format(i), im_grid)
+            # cv2.imwrite('../images_test/grid_cut_{}.jpg'.format(i), im_grid)
     cv2.waitKey()

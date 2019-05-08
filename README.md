@@ -1,5 +1,5 @@
 # sudoku-solver
-This stuff just resolve sudokus one finger in the nose
+This stuff just resolves sudokus one finger in the nose
 
 Hi, my name is Rémi Lux. I'm currently in my final year of Computer Vision Degree.
 Welcome to my project
@@ -44,19 +44,12 @@ I will take a look on multi-threading to improve the execution time
 - [ ] Stronger
 - [ ] Video Live Solving
 - [ ] Improve Training
-- [ ] Multi-threading Training
+- [ ] Multi-threading Processing
 
 ### VERSION LIST
 
+- v1.4 : Video Handling
 - v1.3 : More flexible / New training, better CNN !
 - v1.2 : Multiple grids baby !
 - v1.1 : Use probabilistic Hough & detect grid better
 - v1.0 : First version
-
-
-[sudo_double]: https://user-images.githubusercontent.com/39727257/57106087-d5889f00-6d2c-11e9-805f-350233fed9bc.jpg 
-[sudo_double_solved]: https://user-images.githubusercontent.com/39727257/57106093-d91c2600-6d2c-11e9-95da-c739bb21131e.jpg
-[imgSudoku0NotFilled]: https://user-images.githubusercontent.com/39727257/56866566-da6eeb00-69da-11e9-80bf-0f5eb124dce4.jpg
-[imgSudoku0Solved]: https://user-images.githubusercontent.com/39727257/56866569-ec508e00-69da-11e9-9949-baaf827d3f6e.jpg
-[imgSudoku1NotFilled]: https://user-images.githubusercontent.com/39727257/57035511-89692c00-6c52-11e9-852f-34acd3ed28e4.jpg
-[imgSudoku1Solved]:https://user-images.githubusercontent.com/39727257/57035569-abfb4500-6c52-11e9-9dd2-c7ca6e954a3f.jpg
