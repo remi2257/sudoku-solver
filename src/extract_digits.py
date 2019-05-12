@@ -129,74 +129,78 @@ offset_y = 2
 min_digits_extracted = 20
 
 
-def process_extract_digits(ims, model, display=False,display_digit = False):
+def process_extract_digits(ims, model, display=False, display_digit=False):
+    grids = []
+    for im in ims:
+        grids.append(process_extract_digits_single(im,
+                                                   model, display, display_digit))
+
+    return grids
+
+
+def process_extract_digits_single(im, model, display=False, display_digit=False):
     # if resize:
     #     im = cv2.resize(img, (450, 450))
     # else:
     #     im = img
-    grids = []
-    for im in ims:
-        h_im, w_im = im.shape[:2]
-        im_prepro, gray_enhance = preprocess_im(im)
-        im_contours = im.copy()
-        contours, _ = cv2.findContours(im_prepro, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        img_digits = []
-        loc_digits = []
-        for cnt in contours:
-            x, y, w, h = cv2.boundingRect(cnt)
-            # if abs((x + w / 2) // l_case) < thresh_offset or abs((y + h / 2) // l_case) < thresh_offset:
-            #     cv2.drawContours(im_contours, [cnt], -1, (255, 255, 0), 1)
-            #     continue
-            if thresh_h_low < h < thresh_h_high and thresh_area_low < w * h < thresh_area_high:
-                if display:
-                    cv2.drawContours(im_contours, [cnt], -1, (0, 255, 0), 1)
-                    # print(w*h)
-                y1, y2 = y - offset_y, y + h + offset_y
-                border_x = max(1, int((y2 - y1 - w) / 2))
-                x1, x2 = x - border_x, x + w + border_x
-                # digit = im_prepro[y1:y2, x1:x2]
-                _, digit = cv2.threshold(gray_enhance[max(y1, 0):min(y2, h_im), max(x1, 0):min(x2, w_im)],
-                                         0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-                # digit_w_border = cv2.copyMakeBorder(digit, l_border, l_border, l_border, l_border,
-                #                                     cv2.BORDER_CONSTANT, None, 255)
-                img_digits.append(cv2.resize(digit, (28, 28)).reshape(28, 28, 1))
-                loc_digits.append([(y1 + y2) / 2, (x1 + x2) / 2])
-        img_digits_np = np.array(img_digits) / 255.0
-        if not img_digits:
-            grids.append(None)
-            continue
-        preds_proba = model.predict(img_digits_np)
+    h_im, w_im = im.shape[:2]
+    im_prepro, gray_enhance = preprocess_im(im)
+    im_contours = im.copy()
+    contours, _ = cv2.findContours(im_prepro, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    img_digits = []
+    loc_digits = []
+    for cnt in contours:
+        x, y, w, h = cv2.boundingRect(cnt)
+        # if abs((x + w / 2) // l_case) < thresh_offset or abs((y + h / 2) // l_case) < thresh_offset:
+        #     cv2.drawContours(im_contours, [cnt], -1, (255, 255, 0), 1)
+        #     continue
+        if thresh_h_low < h < thresh_h_high and thresh_area_low < w * h < thresh_area_high:
+            if display:
+                cv2.drawContours(im_contours, [cnt], -1, (0, 255, 0), 1)
+                # print(w*h)
+            y1, y2 = y - offset_y, y + h + offset_y
+            border_x = max(1, int((y2 - y1 - w) / 2))
+            x1, x2 = x - border_x, x + w + border_x
+            # digit = im_prepro[y1:y2, x1:x2]
+            _, digit = cv2.threshold(gray_enhance[max(y1, 0):min(y2, h_im), max(x1, 0):min(x2, w_im)],
+                                     0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            # digit_w_border = cv2.copyMakeBorder(digit, l_border, l_border, l_border, l_border,
+            #                                     cv2.BORDER_CONSTANT, None, 255)
+            img_digits.append(cv2.resize(digit, (28, 28)).reshape(28, 28, 1))
+            loc_digits.append([(y1 + y2) / 2, (x1 + x2) / 2])
+    img_digits_np = np.array(img_digits) / 255.0
+    if not img_digits:
+        return None
+    preds_proba = model.predict(img_digits_np)
 
-        # preds = np.argmax(preds_proba, axis=1) + 1
-        preds = []
-        nbr_digits_extracted = 0
-        for pred_proba in preds_proba:
-            arg_max = np.argmax(pred_proba)
-            if pred_proba[arg_max] > thresh_conf_cnn:
-                preds.append(arg_max + 1)
-                nbr_digits_extracted += 1
-            else:
-                preds.append(-1)
-
-        if nbr_digits_extracted < min_digits_extracted:
-            grids.append(None)
-            continue
-        grid = fill_numeric_grid(preds, loc_digits, h_im, w_im)
-        if display_digit:
-            for i in range(len(preds)):
-                cv2.imshow('pred_' + str(preds[i]) + "-" + str(max(preds_proba[i])), img_digits[i])
-            print(grid)
-            cv2.imshow('im', im)
-            cv2.imshow('im_prepro', im_prepro)
-            cv2.imshow('contours', im_contours)
-            cv2.imshow('pre-filled', fill_img_grid(im, grid))
-
-            cv2.waitKey()
-        if verify_viable_grid(grid):
-            grids.append(grid)
+    # preds = np.argmax(preds_proba, axis=1) + 1
+    preds = []
+    nbr_digits_extracted = 0
+    for pred_proba in preds_proba:
+        arg_max = np.argmax(pred_proba)
+        if pred_proba[arg_max] > thresh_conf_cnn:
+            preds.append(arg_max + 1)
+            nbr_digits_extracted += 1
         else:
-            grids.append(None)
-    return grids
+            preds.append(-1)
+
+    if nbr_digits_extracted < min_digits_extracted:
+        return None
+    grid = fill_numeric_grid(preds, loc_digits, h_im, w_im)
+    if display_digit:
+        for i in range(len(preds)):
+            cv2.imshow('pred_' + str(preds[i]) + "-" + str(max(preds_proba[i])), img_digits[i])
+        print(grid)
+        cv2.imshow('im', im)
+        cv2.imshow('im_prepro', im_prepro)
+        cv2.imshow('contours', im_contours)
+        cv2.imshow('pre-filled', fill_img_grid(im, grid))
+
+        cv2.waitKey()
+    if verify_viable_grid(grid):
+        return grid
+    else:
+        return None
 
 
 if __name__ == '__main__':

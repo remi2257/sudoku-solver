@@ -8,26 +8,28 @@ font_scale = 1.2
 thickness = 2
 
 
-# def recreate_img(im_init, im_grid, M):
-#     h_im, w_im = im_init.shape[:2]
-#     M_inv = np.linalg.inv(M)
-#     new_im = cv2.warpPerspective(im_grid, M_inv, (w_im, h_im))
-#     _, mask = cv2.threshold(cv2.cvtColor(new_im, cv2.COLOR_BGR2GRAY), 1, 255, cv2.THRESH_BINARY)
-#     init_cut = cv2.bitwise_and(im_init, im_init, mask=cv2.bitwise_not(mask))
-#     im_final = cv2.add(init_cut, new_im)
-#
-#     return im_final
+def write_FPS(im, elapsed_time):
+    cv2.putText(im, "{:.2f} FPS".format(1 / elapsed_time),
+                (50, 80), font, 3, (0, 255, 0), thickness)
+
+
 def recreate_img_filled(frame, im_grids, points_grids):
     target_h, target_w = frame.shape[:2]
     im_final = frame.copy()
     for im_grid, points_grid in zip(im_grids, points_grids):
         if im_grid is None:
-            continue
-        grid_h, grid_w = im_grid.shape[:2]
-        init_pts = np.array([[0, 0], [grid_h - 1, 0], [grid_h - 1, grid_w - 1], [0, grid_w - 1]], dtype=np.float32)
-        M = cv2.getPerspectiveTransform(init_pts, points_grid)
-        new_im = cv2.warpPerspective(im_grid, M, (target_w, target_h))
-        _, mask = cv2.threshold(cv2.cvtColor(new_im, cv2.COLOR_BGR2GRAY), 1, 255, cv2.THRESH_BINARY)
+            new_im = np.zeros((frame.shape[0], frame.shape[1], 3), np.uint8)
+            for point in points_grid:
+                x, y = point
+                cv2.circle(new_im, (x, y), 6, (255, 0, 0), 3)
+            _, mask = cv2.threshold(cv2.cvtColor(new_im, cv2.COLOR_BGR2GRAY), 1, 255, cv2.THRESH_BINARY)
+
+        else:
+            grid_h, grid_w = im_grid.shape[:2]
+            init_pts = np.array([[0, 0], [grid_h - 1, 0], [grid_h - 1, grid_w - 1], [0, grid_w - 1]], dtype=np.float32)
+            M = cv2.getPerspectiveTransform(init_pts, points_grid)
+            new_im = cv2.warpPerspective(im_grid, M, (target_w, target_h))
+            _, mask = cv2.threshold(cv2.cvtColor(new_im, cv2.COLOR_BGR2GRAY), 1, 255, cv2.THRESH_BINARY)
         im_final = cv2.bitwise_and(im_final, im_final, mask=cv2.bitwise_not(mask))
         im_final = cv2.add(im_final, new_im)
     return im_final
@@ -62,8 +64,8 @@ if __name__ == '__main__':
     im_path = "../images_test/grid_cut_3.jpg"
     img = cv2.imread(im_path)
     img = cv2.resize(img, (450, 450))
-    my_grid_init = [[0, 0, 0, 9, 0, 0, 7, 0, 0]
-        , [9, 0, 0, 3, 4, 0, 0, 0, 0]
+    my_grid_init = [[9, 0, 0, 3, 4, 0, 0, 0, 0]
+        , [0, 0, 0, 9, 0, 0, 7, 0, 0]
         , [2, 0, 0, 0, 1, 0, 8, 0, 0]
         , [0, 0, 0, 6, 0, 0, 2, 7, 0]
         , [0, 3, 0, 0, 2, 0, 0, 1, 0]

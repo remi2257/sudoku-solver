@@ -1,7 +1,6 @@
 import cv2
 from src.MyHoughLines import *
 from src.MyHoughPLines import *
-# import imutils
 from src.fonctions import resize
 
 
@@ -84,8 +83,8 @@ def show_trackbar_hough(edges):
     max_minLineLength = 20
     cv2.namedWindow('track')
     cv2.createTrackbar('thresh', 'track', 100, max_thresh, nothing)
-    cv2.createTrackbar('minLineLength', 'track', 0, max_minLineLength, nothing)
-    cv2.createTrackbar('maxLineGa', 'track', 4, max_maxLineGap, nothing)
+    cv2.createTrackbar('minLineLength', 'track', 5, max_minLineLength, nothing)
+    cv2.createTrackbar('maxLineGa', 'track', 5, max_maxLineGap, nothing)
     show_hough(edges)
 
 
@@ -259,7 +258,7 @@ def look_for_corners(img_lines, display=False):
 
 
 thresh_hough = 500
-thresh_hough_p = 100
+thresh_hough_p = 170
 minLineLength_h_p = 5
 maxLineGap_h_p = 5
 # display_line_on_edges = True
@@ -267,12 +266,16 @@ display_line_on_edges = False
 
 
 def get_p_hough_transform(img, edges, display=False):
+    # t0 = time.time()
     my_lines = []
     img_lines = np.zeros((img.shape[:2]), np.uint8)
     lines_raw = cv2.HoughLinesP(edges, rho=1, theta=np.pi / 180, threshold=thresh_hough_p,
                                 minLineLength=minLineLength_h_p, maxLineGap=maxLineGap_h_p)
+    # t1 = time.time()
+
     for line in lines_raw:
         my_lines.append(MyHoughPLines(line))
+    # t2 = time.time()
 
     for line in my_lines:
         x1, y1, x2, y2 = line.get_limits()
@@ -281,6 +284,17 @@ def get_p_hough_transform(img, edges, display=False):
     # cv2.waitKey()
     if display_line_on_edges:
         show_trackbar_hough(edges)
+    # t3 = time.time()
+
+    # total_time = t3 - t0
+    # prepro_time = t1 - t0
+    # print("INSIDE Hough Transfrom \t\t{:.1f}% - {:.3f}s".format(100 * prepro_time / total_time, prepro_time))
+    # hough_time = t2 - t1
+    # print("INSIDE LINES \t{:.1f}% - {:.3f}s".format(100 * hough_time / total_time, hough_time))
+    # undistort_time = t3 - t2
+    # print("INSIDE DRAWS LINE \t\t{:.1f}% - {:.3f}s".format(100 * undistort_time / total_time, undistort_time))
+    # print("INSIDE EVERYTHING DONE \t{:.2f}s".format(total_time))
+
     return look_for_corners(img_lines, display)
 
 

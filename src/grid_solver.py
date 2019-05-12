@@ -31,26 +31,24 @@ def solve_grid(sudo):  # Return if grid is solved
 
 
 def main_solve_grids(grids):
-    has_resolve_grid = False
     finished_grids = []
     for grid in grids:
-        if grid is None:
-            finished_grids.append(None)
-            continue
-        sudo = Sudoku(grid=grid)
-        ret, finished_sudo = solve_grid(sudo)
-        if ret:
-            finished_grids.append(finished_sudo.grid)
-            has_resolve_grid = True
-        else:
-            finished_grids.append(None)
+        finished_grids.append(main_solve_grid(grid))
 
-        # else:
-        #     print("Failed during solving")
-        #     # return None
-    if has_resolve_grid:
-        return finished_grids
-    return None
+    if all(elem is None for elem in finished_grids):
+        return None
+    return finished_grids
+
+
+def main_solve_grid(grid):
+    if grid is None:
+        return None
+    sudo = Sudoku(grid=grid)
+    ret, finished_sudo = solve_grid(sudo)
+    if ret:
+        return finished_sudo.grid
+    else:
+        return None
 
 
 if __name__ == '__main__':

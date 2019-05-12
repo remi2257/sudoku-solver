@@ -1,4 +1,6 @@
 import cv2
+from imutils import paths
+import os
 
 
 def resize(image, width=None, height=None, inter=cv2.INTER_AREA):
@@ -38,3 +40,42 @@ def resize(image, width=None, height=None, inter=cv2.INTER_AREA):
 
     # return the resized image
     return resized
+
+
+width_target = 640
+
+
+def get_video_save_size(h, w):
+    r = width_target / float(w)
+    dim = (width_target, int(h * r))
+
+    return dim
+
+
+def create_gif(video_path, o_folder, fps=5, width=320):
+    gif_file_name = o_folder + "video_solve_0.gif"
+    ind_save = 0
+    while os.path.isfile(gif_file_name):
+        ind_save += 1
+        gif_file_name = o_folder + "video_solve_{}.gif".format(ind_save)
+
+    cmd = ["ffmpeg",
+           "-i", video_path,
+           "-vf scale={}:-1".format(width),
+           "-r", str(fps),
+           "-f image2pipe",
+           "-loglevel fatal",
+           "-vcodec ppm - |",
+           "convert",
+           "-delay", str(20),
+           "-loop 0",
+           "-", gif_file_name
+           ]
+    cmd = " ".join(cmd)
+    os.system(cmd)
+
+
+if __name__ == '__main__':
+    video_path_ = "/home/remi/PycharmProjects/sudoku-solver/videos_result/out_process_0.mp4"
+    o_folder_ = "/home/remi/PycharmProjects/sudoku-solver/videos_result/"
+    create_gif(video_path_, o_folder_, width=480)
