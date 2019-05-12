@@ -14,7 +14,9 @@ For a single image process, my algorithm is using working as following :
 - Resolve the grid
 - Then, it will simply regenerate your image with the solution
 
+<p align="center">
 <img src="https://user-images.githubusercontent.com/39727257/57585323-031cd780-74e7-11e9-9268-165ed31e8f7f.gif" width="640"/>
+</p>
 
 
 ### Evolution of the Algorithm
