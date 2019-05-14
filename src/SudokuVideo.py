@@ -60,16 +60,29 @@ class SudokuVideo:
 
     def is_same_grid(self, points):
         thresh_dist = 0.03 * (self.w + self.h)
-        if np.linalg.norm(self.TL - points[0]) > thresh_dist:
-            return False
-        if np.linalg.norm(self.TR - points[1]) > thresh_dist:
-            return False
-        if np.linalg.norm(self.BR - points[2]) > thresh_dist:
-            return False
-        if np.linalg.norm(self.BL - points[3]) > thresh_dist:
-            return False
+        points_grid = self.get_limits()
+        for i in range(4):
+            if np.linalg.norm(points_grid[i] - points[i]) > thresh_dist:
+                return False
 
         self.last_apparition = 0
         self.set_limits(points)
         return True
 
+    def is_same_grid_v2(self, points):
+        thresh_dist = 0.03 * (self.w + self.h)
+        is_same = []
+        points_grid = self.get_limits()
+        for i in range(4):
+            is_same.append(np.linalg.norm(points_grid[i] - points[i]) < thresh_dist)
+
+        if sum(is_same) < 3:
+            return False
+
+        if sum(is_same) == 3:
+            false_value_ind = np.argmin(is_same)
+            points[false_value_ind] = points_grid[false_value_ind]
+
+        self.last_apparition = 0
+        self.set_limits(points)
+        return True

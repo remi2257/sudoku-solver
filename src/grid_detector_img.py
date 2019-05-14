@@ -2,10 +2,72 @@ import cv2
 from src.MyHoughLines import *
 from src.MyHoughPLines import *
 from src.fonctions import resize
+import time
+
+color = (0, 0, 255)
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+font = cv2.FONT_HERSHEY_SIMPLEX
+font_scale = 2.0
+thickness = 3
 
 
 def nothing(x):
     pass
+
+
+def show_big_image(frame_resize, prepro_im, img_lines, img_contour):
+    # cv2.imshow('frame_resize', frame_resize)
+    # cv2.imshow('prepro_im', prepro_im)
+    # cv2.imshow('img_lines', img_lines)
+    # cv2.imshow('img_contour', img_contour)
+
+    top = np.concatenate((frame_resize, cv2.cvtColor(prepro_im, cv2.COLOR_GRAY2BGR)), axis=1)
+    bot = np.concatenate((cv2.cvtColor(img_lines, cv2.COLOR_GRAY2BGR), img_contour), axis=1)
+    im_res = np.concatenate((top, bot), axis=0)
+    h_im, w_im, _ = im_res.shape
+
+    text1 = "0/ Initial Image"
+    text2 = "1/ Preprocessed Image"
+    text3 = "2/ Hough Transform"
+    text4 = "3/ Grids Extraction"
+
+    (text_width, text_height) = cv2.getTextSize(text1, font, fontScale=font_scale, thickness=thickness)[0]
+    # cv2.putText(im_res, text1,
+    #             (w_im // 2 - text_width - 30, h_im // 2 - 30),
+    #             font, font_scale, WHITE, thickness * 3)
+    cv2.rectangle(im_res, (0, 0),
+                  (text_width + 30, text_height + 30),
+                  WHITE, cv2.FILLED)
+    cv2.putText(im_res, text1,
+                (10, text_height + 10),
+                font, font_scale, color, thickness)
+
+    (text_width, text_height) = cv2.getTextSize(text2, font, fontScale=font_scale, thickness=thickness)[0]
+    cv2.rectangle(im_res, (w_im // 2, 0),
+                  (w_im // 2 + text_width + 30, text_height + 30),
+                  WHITE, cv2.FILLED)
+    cv2.putText(im_res, text2,
+                (w_im // 2 + 10, text_height + 10),
+                font, font_scale, color, thickness)
+
+    (text_width, text_height) = cv2.getTextSize(text3, font, fontScale=font_scale, thickness=thickness)[0]
+    cv2.rectangle(im_res, (0, h_im // 2),
+                  (text_width + 30, h_im // 2 + text_height + 30),
+                  WHITE, cv2.FILLED)
+    cv2.putText(im_res, text3,
+                (10, h_im // 2 + text_height + 10),
+                font, font_scale, color, thickness)
+
+    (text_width, text_height) = cv2.getTextSize(text4, font, fontScale=font_scale, thickness=thickness)[0]
+    cv2.rectangle(im_res, (w_im // 2, h_im // 2),
+                  (w_im // 2 + text_width + 30, h_im // 2 + text_height + 30),
+                  WHITE, cv2.FILLED)
+    cv2.putText(im_res, text4,
+                (w_im // 2 + 10, h_im // 2 + text_height + 10),
+                font, font_scale, color, thickness)
+
+    cv2.imshow('res', resize(im_res, height=1000))
 
 
 def show_thresh_adaptive(gray_enhance):
@@ -33,6 +95,18 @@ def show_thresh_adaptive(gray_enhance):
             break
 
 
+def show_trackbar_adap_thresh(gray_enhance):
+    max_block = 40
+    max_mean = 20
+    cv2.namedWindow('track')
+    cv2.createTrackbar('B1', 'track', 10, max_block, nothing)
+    cv2.createTrackbar('M1', 'track', 13, max_mean, nothing)
+    cv2.createTrackbar('B', 'track', 10, max_block, nothing)
+    cv2.createTrackbar('M', 'track', 13, max_mean, nothing)
+    cv2.createTrackbar('M/G', 'track', 0, 1, nothing)
+    show_thresh_adaptive(gray_enhance)
+
+
 def show_hough(edges):
     cv2.imshow("edges", resize(edges, width=900))
     # old_values = [-1,-1,-1]
@@ -41,9 +115,11 @@ def show_hough(edges):
         A = cv2.getTrackbarPos('thresh', 'track')
         B = cv2.getTrackbarPos('minLineLength', 'track')
         C = cv2.getTrackbarPos('maxLineGa', 'track')
+        rho = max(1, cv2.getTrackbarPos('rho', 'track'))
+        theta = max(1, cv2.getTrackbarPos('theta', 'track')) * np.pi / 180
         my_lines = []
         img_lines = np.zeros((edges.shape[:2]), np.uint8)
-        lines_raw = cv2.HoughLinesP(edges, rho=1, theta=np.pi / 180, threshold=A,
+        lines_raw = cv2.HoughLinesP(edges, rho=rho, theta=theta, threshold=A,
                                     minLineLength=B, maxLineGap=C)
 
         for line in lines_raw:
@@ -65,26 +141,18 @@ def show_hough(edges):
             break
 
 
-def show_trackbar_adap_thresh(gray_enhance):
-    max_block = 40
-    max_mean = 20
-    cv2.namedWindow('track')
-    cv2.createTrackbar('B1', 'track', 10, max_block, nothing)
-    cv2.createTrackbar('M1', 'track', 13, max_mean, nothing)
-    cv2.createTrackbar('B', 'track', 10, max_block, nothing)
-    cv2.createTrackbar('M', 'track', 13, max_mean, nothing)
-    cv2.createTrackbar('M/G', 'track', 0, 1, nothing)
-    show_thresh_adaptive(gray_enhance)
-
-
 def show_trackbar_hough(edges):
     max_thresh = 300
     max_maxLineGap = 20
     max_minLineLength = 20
+    max_rho = 20
+    max_theta = 20
     cv2.namedWindow('track')
     cv2.createTrackbar('thresh', 'track', 100, max_thresh, nothing)
     cv2.createTrackbar('minLineLength', 'track', 5, max_minLineLength, nothing)
     cv2.createTrackbar('maxLineGa', 'track', 5, max_maxLineGap, nothing)
+    cv2.createTrackbar('rho', 'track', 1, max_rho, nothing)
+    cv2.createTrackbar('theta', 'track', 1, max_theta, nothing)
     show_hough(edges)
 
 
@@ -210,9 +278,9 @@ approx_poly_coef = 0.1
 
 
 def look_for_corners(img_lines, display=False):
-    # size_min_contours = size_min_contours_ratio * img_lines.shape[0] * img_lines.shape[1]
     if display:
-        img_contours = np.zeros((img_lines.shape[0], img_lines.shape[1], 3), np.uint8)
+        # img_contours = np.zeros((img_lines.shape[0], img_lines.shape[1], 3), np.uint8)
+        img_contours = cv2.cvtColor(img_lines.copy(), cv2.COLOR_GRAY2BGR)
     else:
         img_contours = None
 
@@ -245,6 +313,7 @@ def look_for_corners(img_lines, display=False):
     corners = []
     for best_contour in best_contours:
         corners.append(find_corners(best_contour))
+
     if not display:
         return corners
     else:
@@ -261,6 +330,9 @@ thresh_hough = 500
 thresh_hough_p = 170
 minLineLength_h_p = 5
 maxLineGap_h_p = 5
+hough_rho = 3
+hough_theta = 3 * np.pi / 180
+
 # display_line_on_edges = True
 display_line_on_edges = False
 
@@ -269,7 +341,7 @@ def get_p_hough_transform(img, edges, display=False):
     # t0 = time.time()
     my_lines = []
     img_lines = np.zeros((img.shape[:2]), np.uint8)
-    lines_raw = cv2.HoughLinesP(edges, rho=1, theta=np.pi / 180, threshold=thresh_hough_p,
+    lines_raw = cv2.HoughLinesP(edges, rho=hough_rho, theta=hough_theta, threshold=thresh_hough_p,
                                 minLineLength=minLineLength_h_p, maxLineGap=maxLineGap_h_p)
     # t1 = time.time()
 
@@ -285,12 +357,12 @@ def get_p_hough_transform(img, edges, display=False):
     if display_line_on_edges:
         show_trackbar_hough(edges)
     # t3 = time.time()
-
+    #
     # total_time = t3 - t0
     # prepro_time = t1 - t0
-    # print("INSIDE Hough Transfrom \t\t{:.1f}% - {:.3f}s".format(100 * prepro_time / total_time, prepro_time))
+    # print("INSIDE Hough Transfrom \t{:.1f}% - {:.3f}s".format(100 * prepro_time / total_time, prepro_time))
     # hough_time = t2 - t1
-    # print("INSIDE LINES \t{:.1f}% - {:.3f}s".format(100 * hough_time / total_time, hough_time))
+    # print("INSIDE LINES \t\t\t{:.1f}% - {:.3f}s".format(100 * hough_time / total_time, hough_time))
     # undistort_time = t3 - t2
     # print("INSIDE DRAWS LINE \t\t{:.1f}% - {:.3f}s".format(100 * undistort_time / total_time, undistort_time))
     # print("INSIDE EVERYTHING DONE \t{:.2f}s".format(total_time))
@@ -366,10 +438,8 @@ def main_grid_detector_img(frame, display=False, resized=False):
     if display:
         if use_p_hough:
             extreme_points, img_lines, img_contour = get_p_hough_transform(frame_resize.copy(), prepro_im, display)
-            cv2.imshow('frame_resize', frame_resize)
-            cv2.imshow('prepro_im', prepro_im)
-            cv2.imshow('img_lines', img_lines)
-            cv2.imshow('img_contour', img_contour)
+            show_big_image(frame_resize, prepro_im, img_lines, img_contour)
+
         else:
             extreme_points, img_hough, img_after_merge = get_hough_transform(frame_resize.copy(), prepro_im, display)
             cv2.imshow('frame_resize', frame_resize)
@@ -393,7 +463,7 @@ if __name__ == '__main__':
     # im_path = "../dataset_test/115.jpg"
     # im_path = "../images_test/sudoku5.jpg"
     # im_path = "../images_test/sudoku6.jpg"
-    im_path = "../images_test/video_stop.png"
+    im_path = "../tmp/027.jpg"
     # im_path = "../images_test/imagedouble.jpg"
     im = cv2.imread(im_path)
 

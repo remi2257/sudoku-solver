@@ -36,13 +36,14 @@ def process_1_img(im_path, model):
     ims_filled_grid = write_solved_grids(im_grids_final, grids_matrix, grids_solved)
     im_final = recreate_img_filled(frame, ims_filled_grid, points_grids)
 
-    cv2.imwrite(os.path.splitext(im_path)[0] + "_solved.jpeg", im_final)
+    cv2.imwrite(os.path.splitext(im_path)[0] + "_solved.jpg", im_final)
 
     return 1
 
 
 if __name__ == '__main__':
-    dataset_path = "dataset_test/"
+    # dataset_path = "dataset_test/"
+    dataset_path = "tmp/"
     model = load_model('model/my_model.h5')
     im_list = [dataset_path + im_path for im_path in os.listdir(dataset_path) if im_path.endswith(".jpg")]
     im_list = sorted(im_list, key=lambda x: int(x[-7:-4]))

@@ -81,6 +81,11 @@ def extract_and_solve(im_grids_final, model, already_solved_list, list_possible_
     return grids_matrix, grids_solved
 
 
+def write_FPS(im, elapsed_time):
+    cv2.putText(im, "{:.2f} FPS".format(1 / elapsed_time),
+                (50, 80), font, 3, (0, 255, 0), thickness)
+
+
 def show_im_final(im_final, init_time):
     write_FPS(im_final, time.time() - init_time)
     cv2.imshow("im_final", im_final)
@@ -144,7 +149,7 @@ lim_frames_without_grid = 2
 save_folder = "videos_result/"
 
 
-def main_grid_detector_video(model, display=True, video_path=None, save=0):
+def main_grid_detector_video(model, video_path=None, save=0, display=True):
     list_possible_grid, ims_filled_grid = [], None
     grids_solved = None
     video_out_path = save_folder + 'out_process_0.mp4'
@@ -164,8 +169,8 @@ def main_grid_detector_video(model, display=True, video_path=None, save=0):
     w_vid_target, h_vid_target = get_video_save_size(cap.get(cv2.CAP_PROP_FRAME_HEIGHT),
                                                      cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     if save:
-        # h, w = 480, 640
-
+        if not os.path.isdir(save_folder):
+            os.makedirs(save_folder)
         output_video = cv2.VideoWriter(video_out_path, cv2.VideoWriter_fourcc(*'mp4v'), 30.0,
                                        (w_vid_target, h_vid_target))
         # (1920, 1080))
@@ -216,6 +221,8 @@ def main_grid_detector_video(model, display=True, video_path=None, save=0):
         im_final = recreate_img_filled(frame, ims_filled_grid, points_grids)
         if save > 0:
             output_video.write(resize(im_final, w_vid_target))
+            cv2.imwrite("tmp/{:03d}.jpg".format(ind_save), frame)
+            ind_save += 1
             # output_video.write(frame)
         show_im_final(im_final, init_time)
     # When everything done, release the capture
@@ -231,5 +238,5 @@ def main_grid_detector_video(model, display=True, video_path=None, save=0):
 if __name__ == '__main__':
     my_model = load_model('model/my_model.h5')
     video_p = "/media/hdd_linux/Video/sudoku1.mp4"
-    main_grid_detector_video(my_model, display=True, video_path=video_p, save=2)
+    main_grid_detector_video(my_model, video_path=video_p, save=1, display=True)
     # main_grid_detector_video(model)

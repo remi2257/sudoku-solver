@@ -8,18 +8,16 @@ from keras.models import load_model
 import tensorflow as tf
 import sys
 import time
-# import imutils
 from src.fonctions import resize
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 tf.logging.set_verbosity(tf.logging.ERROR)
-save_path = "images_save/"
+save_folder = "images_save/"
 
 
-def main_process_img(im_path, save=False, display=False):
+def main_process_img(im_path, model, save=False, display=False):
     resized = False
     init = time.time()
-    model = load_model('model/my_model.h5')
     frame = cv2.imread(im_path)  # TODO Check if image not well oriented - EXIF data
     init0 = time.time()
     if frame is None:
@@ -29,7 +27,7 @@ def main_process_img(im_path, save=False, display=False):
         # frame = imutils.resize(frame, height=900, width=900)
         frame = resize(frame, height=900, width=900)
         resized = True
-    im_grids_final, points_grids = main_grid_detector_img(frame,display=display, resized=resized)
+    im_grids_final, points_grids = main_grid_detector_img(frame, display=display, resized=resized)
     found_grid_time = time.time()
     if im_grids_final is None:
         print("No grid found")
@@ -44,7 +42,7 @@ def main_process_img(im_path, save=False, display=False):
     if grids_solved is None:
         print(grids_matrix)
         cv2.imshow('grid_extract', im_grids_final[0])
-        cv2.imwrite(save_path + os.path.splitext(os.path.basename(im_path))[0] + "_failed.jpg", im_grids_final[0])
+        cv2.imwrite(save_folder + os.path.splitext(os.path.basename(im_path))[0] + "_failed.jpg", im_grids_final[0])
         cv2.waitKey()
         sys.exit(3)
 
@@ -55,8 +53,10 @@ def main_process_img(im_path, save=False, display=False):
     final_time = time.time()
 
     if save:
+        if not os.path.isdir(save_folder):
+            os.makedirs(save_folder)
         # cv2.imwrite(os.path.splitext(im_path)[0] + "_solved.jpg", imutils.resize(im_final,height=600))
-        cv2.imwrite(save_path + os.path.splitext(os.path.basename(im_path))[0] + "_solved.jpg", im_final)
+        cv2.imwrite(save_folder + os.path.splitext(os.path.basename(im_path))[0] + "_solved.jpg", im_final)
 
     total_time = final_time - init
 
@@ -85,6 +85,7 @@ def main_process_img(im_path, save=False, display=False):
 
 
 if __name__ == '__main__':
+    model = load_model('model/my_model.h5')
     im_paths = [
         "images_test/sudoku.jpg",
         "images_test/sudoku1.jpg",
@@ -93,8 +94,9 @@ if __name__ == '__main__':
         "images_test/imagedouble.jpg",  # 4
         "images_test/sudoku5.jpg",
         "images_test/sudoku6.jpg",
-        "dataset_test/076.jpg", # 7
-        "images_test/video_stop.png", # 8
+        "dataset_test/004.jpg",  # 7
+        "images_test/video_stop.png",  # 8
+        "tmp/027.jpg",  # 9
     ]
-    im_path = im_paths[8]
-    main_process_img(im_path, save=False, display=True)
+    im_path = im_paths[7]
+    main_process_img(im_path, model, save=False, display=True)

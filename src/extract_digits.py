@@ -8,7 +8,7 @@ from src.Sudoku import verify_viable_grid
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 tf.logging.set_verbosity(tf.logging.ERROR)
 
-thresh_conf_cnn = 0.999
+thresh_conf_cnn = 0.995
 
 
 def show_thresh(gray_enhance):
@@ -46,6 +46,60 @@ def show_trackbar(gray_enhance):
     cv2.createTrackbar('M', 'track', 13, max_mean, show_thresh)
     cv2.createTrackbar('M/G', 'track', 0, 1, show_thresh)
     show_thresh(gray_enhance)
+
+
+def show_big_image(im, im_prepro, im_contours, pre_filled):
+    from src.fonctions import resize
+    color_text = (0, 0, 255)
+    # WHITE = (255, 255, 255)
+    BLACK = (0, 0, 0)
+    my_font = cv2.FONT_HERSHEY_SIMPLEX
+    my_font_scale = 1.2
+    m_thickness = 2
+
+    top = np.concatenate((im, cv2.cvtColor(im_prepro, cv2.COLOR_GRAY2BGR)), axis=1)
+    bot = np.concatenate((im_contours, pre_filled), axis=1)
+    im_res = np.concatenate((top, bot), axis=0)
+    h_im, w_im, _ = im_res.shape
+
+    text1 = "0/ Initial Grid"
+    text2 = "1/ Preprocessed Grid"
+    text3 = "2/ Digits Detection"
+    text4 = "3/ Digits Identification"
+
+    (text_width, text_height) = cv2.getTextSize(text1, my_font, fontScale=my_font_scale, thickness=m_thickness)[0]
+    cv2.rectangle(im_res, (0, 0),
+                  (text_width + 15, text_height + 15),
+                  BLACK, cv2.FILLED)
+    cv2.putText(im_res, text1,
+                (5, text_height + 5),
+                my_font, my_font_scale, color_text, m_thickness)
+
+    (text_width, text_height) = cv2.getTextSize(text2, my_font, fontScale=my_font_scale, thickness=m_thickness)[0]
+    cv2.rectangle(im_res, (w_im // 2, 0),
+                  (w_im // 2 + text_width + 15, text_height + 15),
+                  BLACK, cv2.FILLED)
+    cv2.putText(im_res, text2,
+                (w_im // 2 + 5, text_height + 5),
+                my_font, my_font_scale, color_text, m_thickness)
+
+    (text_width, text_height) = cv2.getTextSize(text3, my_font, fontScale=my_font_scale, thickness=m_thickness)[0]
+    cv2.rectangle(im_res, (0, h_im // 2),
+                  (text_width + 15, h_im // 2 + text_height + 15),
+                  BLACK, cv2.FILLED)
+    cv2.putText(im_res, text3,
+                (5, h_im // 2 + text_height + 5),
+                my_font, my_font_scale, color_text, m_thickness)
+
+    (text_width, text_height) = cv2.getTextSize(text4, my_font, fontScale=my_font_scale, thickness=m_thickness)[0]
+    cv2.rectangle(im_res, (w_im // 2, h_im // 2),
+                  (w_im // 2 + text_width + 15, h_im // 2 + text_height + 15),
+                  BLACK, cv2.FILLED)
+    cv2.putText(im_res, text4,
+                (w_im // 2 + 5, h_im // 2 + text_height + 5),
+                my_font, my_font_scale, color_text, m_thickness)
+
+    cv2.imshow('res', resize(im_res, height=500))
 
 
 def preprocess_im(im, is_gray=False):
@@ -162,11 +216,12 @@ def process_extract_digits_single(im, model, display=False, display_digit=False)
             border_x = max(1, int((y2 - y1 - w) / 2))
             x1, x2 = x - border_x, x + w + border_x
             # digit = im_prepro[y1:y2, x1:x2]
-            _, digit = cv2.threshold(gray_enhance[max(y1, 0):min(y2, h_im), max(x1, 0):min(x2, w_im)],
-                                     0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            digit_cut = gray_enhance[max(y1, 0):min(y2, h_im), max(x1, 0):min(x2, w_im)]
+            _, digit_thresh = cv2.threshold(digit_cut,
+                                            0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             # digit_w_border = cv2.copyMakeBorder(digit, l_border, l_border, l_border, l_border,
             #                                     cv2.BORDER_CONSTANT, None, 255)
-            img_digits.append(cv2.resize(digit, (28, 28)).reshape(28, 28, 1))
+            img_digits.append(cv2.resize(digit_thresh, (28, 28), interpolation=cv2.INTER_NEAREST).reshape(28, 28, 1))
             loc_digits.append([(y1 + y2) / 2, (x1 + x2) / 2])
     img_digits_np = np.array(img_digits) / 255.0
     if not img_digits:
@@ -190,13 +245,10 @@ def process_extract_digits_single(im, model, display=False, display_digit=False)
     if display_digit:
         for i in range(len(preds)):
             cv2.imshow('pred_' + str(preds[i]) + "-" + str(max(preds_proba[i])), img_digits[i])
+    if display:
         print(grid)
-        cv2.imshow('im', im)
-        cv2.imshow('im_prepro', im_prepro)
-        cv2.imshow('contours', im_contours)
-        cv2.imshow('pre-filled', fill_img_grid(im, grid))
+        show_big_image(im, im_prepro, im_contours, fill_img_grid(im, grid))
 
-        cv2.waitKey()
     if verify_viable_grid(grid):
         return grid
     else:
@@ -206,9 +258,10 @@ def process_extract_digits_single(im, model, display=False, display_digit=False)
 if __name__ == '__main__':
     model = load_model('model/my_model.h5')
 
-    im_path = "images_test/grid_cut_0.jpg"
+    im_path = "images_test/grid_cut_1.jpg"
     # im_path = "images_save/023_failed.jpg"
     # im_path = "images_test/izi.png"
     img = cv2.imread(im_path)
-    res_grids = process_extract_digits([img], model, display=True)
-    print(res_grids)
+    res_grids = process_extract_digits([img], model, display=True, display_digit=True)
+    cv2.waitKey()
+    # print(res_grids)

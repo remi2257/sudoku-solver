@@ -8,12 +8,9 @@ font_scale = 1.2
 thickness = 2
 
 
-def write_FPS(im, elapsed_time):
-    cv2.putText(im, "{:.2f} FPS".format(1 / elapsed_time),
-                (50, 80), font, 3, (0, 255, 0), thickness)
-
-
 def recreate_img_filled(frame, im_grids, points_grids):
+    # from src.fonctions import resize
+
     target_h, target_w = frame.shape[:2]
     im_final = frame.copy()
     for im_grid, points_grid in zip(im_grids, points_grids):
@@ -27,11 +24,13 @@ def recreate_img_filled(frame, im_grids, points_grids):
         else:
             grid_h, grid_w = im_grid.shape[:2]
             init_pts = np.array([[0, 0], [grid_h - 1, 0], [grid_h - 1, grid_w - 1], [0, grid_w - 1]], dtype=np.float32)
-            M = cv2.getPerspectiveTransform(init_pts, points_grid)
-            new_im = cv2.warpPerspective(im_grid, M, (target_w, target_h))
+            transform_matrix = cv2.getPerspectiveTransform(init_pts, points_grid)
+            new_im = cv2.warpPerspective(im_grid, transform_matrix, (target_w, target_h))
             _, mask = cv2.threshold(cv2.cvtColor(new_im, cv2.COLOR_BGR2GRAY), 1, 255, cv2.THRESH_BINARY)
         im_final = cv2.bitwise_and(im_final, im_final, mask=cv2.bitwise_not(mask))
         im_final = cv2.add(im_final, new_im)
+        # cv2.imshow("res", resize(np.concatenate((new_im, im_final), axis=1),width=600))
+        # cv2.waitKey()
     return im_final
 
 
@@ -61,28 +60,28 @@ def write_solved_grids(frames, grids_matrix, solved_grids):
 
 
 if __name__ == '__main__':
-    im_path = "../images_test/grid_cut_3.jpg"
+    im_path = "../images_test/grid_cut_0.jpg"
     img = cv2.imread(im_path)
     img = cv2.resize(img, (450, 450))
-    my_grid_init = [[9, 0, 0, 3, 4, 0, 0, 0, 0]
-        , [0, 0, 0, 9, 0, 0, 7, 0, 0]
-        , [2, 0, 0, 0, 1, 0, 8, 0, 0]
-        , [0, 0, 0, 6, 0, 0, 2, 7, 0]
-        , [0, 3, 0, 0, 2, 0, 0, 1, 0]
-        , [0, 5, 2, 0, 0, 9, 0, 0, 0]
-        , [0, 0, 8, 0, 6, 0, 0, 0, 5]
-        , [0, 0, 0, 0, 9, 1, 0, 0, 4]
-        , [0, 0, 4, 0, 0, 8, 0, 0, 0]]
+    my_grid_init = [[9, 0, 0, 3, 4, 0, 0, 0, 0],
+                    [0, 0, 0, 9, 0, 0, 7, 0, 0],
+                    [2, 0, 0, 0, 1, 0, 8, 0, 0],
+                    [0, 0, 0, 6, 0, 0, 2, 7, 0],
+                    [0, 3, 0, 0, 2, 0, 0, 1, 0],
+                    [0, 5, 2, 0, 0, 9, 0, 0, 0],
+                    [0, 0, 8, 0, 6, 0, 0, 0, 5],
+                    [0, 0, 0, 0, 9, 1, 0, 0, 4],
+                    [0, 0, 4, 0, 0, 8, 0, 0, 0]]
 
-    my_solved_grid = [[5, 6, 3, 9, 8, 2, 7, 4, 1]
-        , [9, 8, 1, 3, 4, 7, 6, 5, 2]
-        , [2, 4, 7, 5, 1, 6, 8, 9, 3]
-        , [4, 1, 9, 6, 3, 5, 2, 7, 8]
-        , [7, 3, 6, 8, 2, 4, 5, 1, 9]
-        , [8, 5, 2, 1, 7, 9, 4, 3, 6]
-        , [1, 7, 8, 4, 6, 3, 9, 2, 5]
-        , [6, 2, 5, 7, 9, 1, 3, 8, 4]
-        , [3, 9, 4, 2, 5, 8, 1, 6, 7]]
+    my_solved_grid = [[5, 6, 3, 9, 8, 2, 7, 4, 1],
+                      [9, 8, 1, 3, 4, 7, 6, 5, 2],
+                      [2, 4, 7, 5, 1, 6, 8, 9, 3],
+                      [4, 1, 9, 6, 3, 5, 2, 7, 8],
+                      [7, 3, 6, 8, 2, 4, 5, 1, 9],
+                      [8, 5, 2, 1, 7, 9, 4, 3, 6],
+                      [1, 7, 8, 4, 6, 3, 9, 2, 5],
+                      [6, 2, 5, 7, 9, 1, 3, 8, 4],
+                      [3, 9, 4, 2, 5, 8, 1, 6, 7]]
     res_im_filled_grid = write_solved_grids([img], [np.array(my_grid_init)], np.array([my_solved_grid]))
     cv2.imshow("im", img)
     cv2.imshow("im_fill", res_im_filled_grid[0])
