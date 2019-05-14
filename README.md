@@ -5,7 +5,7 @@ Welcome to my project
 My algorithm is able to detect and to directly solve sudokus in VR
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/39727257/57652501-0213a500-75d0-11e9-9f14-2a3bada71923.gif" width="640"/>
+<img src="https://user-images.githubusercontent.com/39727257/57652501-0213a500-75d0-11e9-9f14-2a3bada71923.gif" width="500"/>
 </p>
 
 
@@ -30,7 +30,7 @@ Once grids are extracted, for each grid we do :
 * Create a numeric grid in a table & solve it
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/39727257/57726097-fb983280-768e-11e9-9374-065b416a5790.png" width="640"/>
+<img src="https://user-images.githubusercontent.com/39727257/57726097-fb983280-768e-11e9-9374-065b416a5790.png" width="400"/>
 </p>
 
 
@@ -39,7 +39,7 @@ Once grids are extracted, for each grid we do :
 * Add the 2 images together to create the final result
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/39727257/57727741-89c1e800-7692-11e9-8b4d-491b72c62cb0.png" width="640"/>
+<img src="https://user-images.githubusercontent.com/39727257/57727741-89c1e800-7692-11e9-8b4d-491b72c62cb0.png" width="500"/>
 </p>
 
 ### Video Case
