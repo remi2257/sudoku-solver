@@ -1,5 +1,5 @@
 # sudoku-solver
-Hi, my name is Rémi Lux. I'm currently in my final year of Computer Vision Degree
+Hi, my name is Remi LUX. I'm currently in my final year of Computer Vision Degree
 in Grenoble INP - Phelma.
 Welcome to my project  
 My algorithm is able to detect and to directly solve sudokus in VR
@@ -61,6 +61,14 @@ Then, open a terminal & go in the repository
 
 You can see the options by typing
 `python3 sudoku_solver_main.py -h`  
+
+You will need some libraries before running it  
+- Numpy
+- OpenCV 
+- Keras
+- Tensorflow
+
+To Install : `pip install <library_name>` 
 
 #### Easy way
 Take your own picture/video of your process target and use the command  

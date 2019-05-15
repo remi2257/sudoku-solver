@@ -24,7 +24,6 @@ def main_process_img(im_path, model, save=False, display=False):
         print("This path doesn't lead to a frame")
         sys.exit(3)
     if frame.shape[0] > 1000:
-        # frame = imutils.resize(frame, height=900, width=900)
         frame = resize(frame, height=900, width=900)
         resized = True
     im_grids_final, points_grids = main_grid_detector_img(frame, display=display, resized=resized)
@@ -55,7 +54,6 @@ def main_process_img(im_path, model, save=False, display=False):
     if save:
         if not os.path.isdir(save_folder):
             os.makedirs(save_folder)
-        # cv2.imwrite(os.path.splitext(im_path)[0] + "_solved.jpg", imutils.resize(im_final,height=600))
         cv2.imwrite(save_folder + os.path.splitext(os.path.basename(im_path))[0] + "_solved.jpg", im_final)
 
     total_time = final_time - init
