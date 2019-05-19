@@ -1,5 +1,5 @@
 import numpy as np
-import copy
+from src.settings import same_grid_dist_ratio
 
 
 class SudokuVideo:
@@ -70,7 +70,7 @@ class SudokuVideo:
         return True
 
     def is_same_grid_v2(self, points):
-        thresh_dist = 0.03 * (self.w + self.h)
+        thresh_dist = same_grid_dist_ratio * (self.w + self.h)
         is_same = []
         points_grid = self.get_limits()
         for i in range(4):

@@ -3,9 +3,8 @@ from src.Sudoku import *
 
 def solve_grid(sudo):  # Return if grid is solved
     while not sudo.is_filled():
-        sudo.get_possible_values()
+        # sudo.get_possible_values()
         if sudo.should_make_hypothesis():
-            # print('Hypothesis')
             x, y, possible_values_hyp = sudo.best_hypothesis()
             if not possible_values_hyp:  # At least one free spot can't have a solution
                 return False, None
@@ -19,13 +18,12 @@ def solve_grid(sudo):  # Return if grid is solved
                     del new_sudo
             return False, None  # None hypothesis lead to something
         else:
-            ret = sudo.apply_unique_possibility()
+            ret = sudo.apply_unique_possibilities()
             if ret is False:
                 # print(sudo)
                 # print("ARF")
                 del sudo
                 return False, None
-        # print(sudo)
     # print("COMING HOME")
     return True, sudo
 
@@ -88,21 +86,24 @@ if __name__ == '__main__':
         [0, 0, 0, 4, 0, 0, 0, 0, 0]
     ]
     grid4 = [
-        [0, 0, 0, 9, 0, 0, 7, 0, 0],
-        [9, 0, 0, 3, 4, 0, 0, 0, 0],
-        [2, 0, 0, 0, 1, 0, 8, 0, 0],
-        [0, 0, 0, 0, 0, 0, 2, 7, 0],
-        [0, 3, 0, 0, 2, 0, 0, 1, 0],
-        [0, 5, 2, 0, 0, 9, 0, 0, 0],
-        [0, 0, 8, 0, 6, 0, 0, 0, 5],
-        [0, 0, 0, 0, 9, 1, 0, 0, 4],
-        [0, 0, 4, 0, 0, 8, 0, 0, 0]
+        [8, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 3, 6, 0, 0, 0, 0, 0],
+        [0, 7, 0, 0, 9, 0, 2, 0, 0],
+        [0, 5, 0, 0, 0, 7, 0, 0, 0],
+        [0, 0, 0, 0, 4, 5, 7, 0, 0],
+        [0, 0, 0, 1, 0, 0, 0, 3, 0],
+        [0, 0, 1, 0, 0, 0, 0, 6, 8],
+        [0, 0, 8, 5, 0, 0, 0, 1, 0],
+        [0, 9, 0, 0, 0, 0, 4, 0, 0]
     ]
 
     target_grid = grid1
     init = time.time()
-    f_sudo = main_solve_grids(target_grid)
+    f_sudo = main_solve_grid(target_grid)
     print("Took {:.5f} s".format(time.time() - init))
     print(Sudoku(grid=target_grid))
-    print(f_sudo)
-    print("Validated ?", Sudoku(grid=f_sudo).verify_result())
+    if f_sudo is None:
+        print("echec")
+    else:
+        print(f_sudo)
+        print("Validated ?", Sudoku(grid=f_sudo).verify_result())

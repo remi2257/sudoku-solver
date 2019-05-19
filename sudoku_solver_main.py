@@ -2,6 +2,7 @@ import argparse
 import sys
 import tensorflow as tf
 import os
+from src.settings import logger
 
 images_extension = [".jpg", ".jpeg", ".png", ".bmp", ".ash"]
 video_extension = [".mp4", ".avi"]
@@ -13,6 +14,17 @@ def help_profiles():
     return ('Profile type (Default: %(default)s)\n'
             '1 : Image/Video\n'
             '2 : Webcam /!\\ Too low quality won\'t lead to good result\n'
+            )
+
+
+def help_save():
+    return ("Save output result in a repo folder"
+            "(images_save/ for images || videos_result/ for a Video)\n"
+            "(Default: %(default)s)\n"
+            '0 : No save\n'
+            '1 : [IMAGE] Save result / [VIDEO] Save full result\n'
+            '2 : [VIDEO] Save only frames with detected grid in a .gif\n'
+            '3 : [VIDEO] Save everything in a .gif + multiple .jpg\n'
             )
 
 
@@ -42,9 +54,18 @@ def parser_generation():
                         help="Path of the CNN model to identify digits", type=str,
                         default='model/my_model.h5')
 
-    parser.add_argument("-s", "--save", help="Save output result in a repo folder"
-                                             "(images_save/ for images videos_result/ for a Video)",
+    parser.add_argument("-s", "--save",
+                        help=help_save(),
+                        type=int, choices=[0, 1, 2, 3], default=1)
+
+    parser.add_argument("-d", "--display",
+                        help="display output detail",
                         action="store_true")
+
+    parser.add_argument("-v", "--verbose", default='critical', type=str.lower,
+                        choices=['critical', 'error','warning', 'info', 'debug'],
+                        help="Set verbose Level (Default: %(default)s)"
+                        )
 
     args = parser.parse_args()
 
@@ -53,16 +74,17 @@ def parser_generation():
 
 def setting_recup():  # Function to read parameter settings
     args = parser_generation()
+    logger.setLevel(args.verbose.upper())
 
     if args.i_path is None and not args.profile == 2:
-        print("\nCannot analyse an image|video without a path\nLeaving...")
-        sys.exit(3)
+        logger.warning("\nCannot analyse an image neither a video without a path\nSwitching to Webcam...")
+        args.profile = 2
 
     try:
         from keras.models import load_model
         model = load_model(args.model_path)
     except OSError:
-        print("\nCannot localize model\nLeaving...")
+        logger.critical("\nCannot localize model\nLeaving...")
         sys.exit(3)
     return args, model
 
@@ -75,13 +97,13 @@ def main_process():
             main_process_img(args.i_path, model, args.save)
         elif args.i_path.endswith(tuple(video_extension)):
             from src.main_video import main_grid_detector_video
-            main_grid_detector_video(model, video_path=args.i_path, save=int(args.save))
+            main_grid_detector_video(model, video_path=args.i_path, save=args.save, display=args.display)
         else:
-            print("\nCannot identify File type\nLeaving...")
+            logger.critical("\nCannot identify File type\nLeaving...")
             sys.exit(3)
     else:  # Webcam
         from src.main_video import main_grid_detector_video
-        main_grid_detector_video(model, save=int(args.save))
+        main_grid_detector_video(model, save=args.save, display=args.display)  #
 
 
 if __name__ == '__main__':

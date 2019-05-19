@@ -1,73 +1,66 @@
 import cv2
 from src.MyHoughLines import *
 from src.MyHoughPLines import *
-from src.fonctions import resize
-import time
-
-color = (0, 0, 255)
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-font = cv2.FONT_HERSHEY_SIMPLEX
-font_scale = 2.0
-thickness = 3
+from src.fonctions import my_resize
+from src.settings import *
+# from src.fonctions import timer_decorator
+# import time
 
 
 def nothing(x):
     pass
 
 
-def show_big_image(frame_resize, prepro_im, img_lines, img_contour):
-    # cv2.imshow('frame_resize', frame_resize)
-    # cv2.imshow('prepro_im', prepro_im)
-    # cv2.imshow('img_lines', img_lines)
-    # cv2.imshow('img_contour', img_contour)
+def show_big_image(frame_resize, prepro_im, img_lines, img_contour, use_hough=False):
+    if not use_hough:
+        im_res = np.concatenate((frame_resize, img_contour), axis=0)
+    else:
+        top = np.concatenate((frame_resize, cv2.cvtColor(prepro_im, cv2.COLOR_GRAY2BGR)), axis=1)
+        bot = np.concatenate((cv2.cvtColor(img_lines, cv2.COLOR_GRAY2BGR), img_contour), axis=1)
+        im_res = np.concatenate((top, bot), axis=0)
+        h_im, w_im, _ = im_res.shape
 
-    top = np.concatenate((frame_resize, cv2.cvtColor(prepro_im, cv2.COLOR_GRAY2BGR)), axis=1)
-    bot = np.concatenate((cv2.cvtColor(img_lines, cv2.COLOR_GRAY2BGR), img_contour), axis=1)
-    im_res = np.concatenate((top, bot), axis=0)
-    h_im, w_im, _ = im_res.shape
+        text1 = "0/ Initial Image"
+        text2 = "1/ Preprocessed Image"
+        text3 = "2/ Hough Transform"
+        text4 = "3/ Grids Extraction"
 
-    text1 = "0/ Initial Image"
-    text2 = "1/ Preprocessed Image"
-    text3 = "2/ Hough Transform"
-    text4 = "3/ Grids Extraction"
+        (text_width, text_height) = cv2.getTextSize(text1, font, fontScale=font_scale, thickness=thickness)[0]
+        # cv2.putText(im_res, text1,
+        #             (w_im // 2 - text_width - 30, h_im // 2 - 30),
+        #             font, font_scale, WHITE, thickness * 3)
+        cv2.rectangle(im_res, (0, 0),
+                      (text_width + 30, text_height + 30),
+                      WHITE, cv2.FILLED)
+        cv2.putText(im_res, text1,
+                    (10, text_height + 10),
+                    font, font_scale, RED, thickness)
 
-    (text_width, text_height) = cv2.getTextSize(text1, font, fontScale=font_scale, thickness=thickness)[0]
-    # cv2.putText(im_res, text1,
-    #             (w_im // 2 - text_width - 30, h_im // 2 - 30),
-    #             font, font_scale, WHITE, thickness * 3)
-    cv2.rectangle(im_res, (0, 0),
-                  (text_width + 30, text_height + 30),
-                  WHITE, cv2.FILLED)
-    cv2.putText(im_res, text1,
-                (10, text_height + 10),
-                font, font_scale, color, thickness)
+        (text_width, text_height) = cv2.getTextSize(text2, font, fontScale=font_scale, thickness=thickness)[0]
+        cv2.rectangle(im_res, (w_im // 2, 0),
+                      (w_im // 2 + text_width + 30, text_height + 30),
+                      WHITE, cv2.FILLED)
+        cv2.putText(im_res, text2,
+                    (w_im // 2 + 10, text_height + 10),
+                    font, font_scale, RED, thickness)
 
-    (text_width, text_height) = cv2.getTextSize(text2, font, fontScale=font_scale, thickness=thickness)[0]
-    cv2.rectangle(im_res, (w_im // 2, 0),
-                  (w_im // 2 + text_width + 30, text_height + 30),
-                  WHITE, cv2.FILLED)
-    cv2.putText(im_res, text2,
-                (w_im // 2 + 10, text_height + 10),
-                font, font_scale, color, thickness)
+        (text_width, text_height) = cv2.getTextSize(text3, font, fontScale=font_scale, thickness=thickness)[0]
+        cv2.rectangle(im_res, (0, h_im // 2),
+                      (text_width + 30, h_im // 2 + text_height + 30),
+                      WHITE, cv2.FILLED)
+        cv2.putText(im_res, text3,
+                    (10, h_im // 2 + text_height + 10),
+                    font, font_scale, RED, thickness)
 
-    (text_width, text_height) = cv2.getTextSize(text3, font, fontScale=font_scale, thickness=thickness)[0]
-    cv2.rectangle(im_res, (0, h_im // 2),
-                  (text_width + 30, h_im // 2 + text_height + 30),
-                  WHITE, cv2.FILLED)
-    cv2.putText(im_res, text3,
-                (10, h_im // 2 + text_height + 10),
-                font, font_scale, color, thickness)
+        (text_width, text_height) = cv2.getTextSize(text4, font, fontScale=font_scale, thickness=thickness)[0]
+        cv2.rectangle(im_res, (w_im // 2, h_im // 2),
+                      (w_im // 2 + text_width + 30, h_im // 2 + text_height + 30),
+                      WHITE, cv2.FILLED)
+        cv2.putText(im_res, text4,
+                    (w_im // 2 + 10, h_im // 2 + text_height + 10),
+                    font, font_scale, RED, thickness)
 
-    (text_width, text_height) = cv2.getTextSize(text4, font, fontScale=font_scale, thickness=thickness)[0]
-    cv2.rectangle(im_res, (w_im // 2, h_im // 2),
-                  (w_im // 2 + text_width + 30, h_im // 2 + text_height + 30),
-                  WHITE, cv2.FILLED)
-    cv2.putText(im_res, text4,
-                (w_im // 2 + 10, h_im // 2 + text_height + 10),
-                font, font_scale, color, thickness)
-
-    cv2.imshow('res', resize(im_res, height=1000))
+    cv2.imshow('res', my_resize(im_res, height=900))
 
 
 def show_thresh_adaptive(gray_enhance):
@@ -80,16 +73,18 @@ def show_thresh_adaptive(gray_enhance):
         C = max(3, 1 + 2 * cv2.getTrackbarPos('B', 'track'))
         D = cv2.getTrackbarPos('M', 'track')
         adap = cv2.getTrackbarPos('M/G', 'track')
+        blur_size = 2 * cv2.getTrackbarPos('blur_size', 'track') + 1
+
         if adap == 0:
             adap = cv2.ADAPTIVE_THRESH_MEAN_C
         else:
             adap = cv2.ADAPTIVE_THRESH_GAUSSIAN_C
-        blurred = cv2.GaussianBlur(gray_enhance, (5, 5), 0)
+        blurred = cv2.GaussianBlur(gray_enhance, (blur_size, blur_size), 0)
         thresh = cv2.adaptiveThreshold(gray_enhance, 255, adap, cv2.THRESH_BINARY, A, B)
         thresh2 = cv2.adaptiveThreshold(blurred, 255, adap, cv2.THRESH_BINARY, C, D)
 
         cv2.imshow('thresh', thresh)
-        cv2.imshow('thresh2', thresh2)
+        cv2.imshow('thresh_with_blur', thresh2)
         k = cv2.waitKey(1) & 0xFF
         if k == 27:
             break
@@ -97,45 +92,54 @@ def show_thresh_adaptive(gray_enhance):
 
 def show_trackbar_adap_thresh(gray_enhance):
     max_block = 40
-    max_mean = 20
+    max_mean = 80
     cv2.namedWindow('track')
-    cv2.createTrackbar('B1', 'track', 10, max_block, nothing)
-    cv2.createTrackbar('M1', 'track', 13, max_mean, nothing)
-    cv2.createTrackbar('B', 'track', 10, max_block, nothing)
-    cv2.createTrackbar('M', 'track', 13, max_mean, nothing)
+    cv2.createTrackbar('B1', 'track', block_size_big // 2 + 1, max_block, nothing)
+    cv2.createTrackbar('M1', 'track', mean_sub_big, max_mean, nothing)
+    cv2.createTrackbar('B', 'track', block_size_big // 2 + 1, max_block, nothing)
+    cv2.createTrackbar('M', 'track', mean_sub_big, max_mean, nothing)
     cv2.createTrackbar('M/G', 'track', 0, 1, nothing)
+    cv2.createTrackbar('blur_size', 'track', 1, 5, nothing)
     show_thresh_adaptive(gray_enhance)
 
 
 def show_hough(edges):
-    cv2.imshow("edges", resize(edges, width=900))
+    # cv2.imshow("edges", edges)
     # old_values = [-1,-1,-1]
     while (1):
-        # get current positions of four trackbars
+        w = cv2.getTrackbarPos('width', 'track')
+        edges_resize = my_resize(edges, width=max(100, w))
+        cv2.imshow("edges_resize", edges_resize)
+
         A = cv2.getTrackbarPos('thresh', 'track')
         B = cv2.getTrackbarPos('minLineLength', 'track')
         C = cv2.getTrackbarPos('maxLineGa', 'track')
         rho = max(1, cv2.getTrackbarPos('rho', 'track'))
         theta = max(1, cv2.getTrackbarPos('theta', 'track')) * np.pi / 180
         my_lines = []
-        img_lines = np.zeros((edges.shape[:2]), np.uint8)
-        lines_raw = cv2.HoughLinesP(edges, rho=rho, theta=theta, threshold=A,
+
+        img_lines = np.zeros((edges_resize.shape[:2]), np.uint8)
+
+        lines_raw = cv2.HoughLinesP(edges_resize, rho=rho, theta=theta, threshold=A,
                                     minLineLength=B, maxLineGap=C)
 
-        for line in lines_raw:
-            my_lines.append(MyHoughPLines(line))
+        img_binary_lines = cv2.cvtColor(edges_resize, cv2.COLOR_GRAY2BGR)
+        if lines_raw is not None:
+            for line in lines_raw:
+                my_lines.append(MyHoughPLines(line))
 
-        for line in my_lines:
-            x1, y1, x2, y2 = line.get_limits()
-            cv2.line(img_lines, (x1, y1), (x2, y2), 255, 2)
+            for line in my_lines:
+                x1, y1, x2, y2 = line.get_limits()
+                cv2.line(img_lines, (x1, y1), (x2, y2), 255, 2)
 
-        img_binary_lines = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
-        for line in my_lines:
-            x1, y1, x2, y2 = line.get_limits()
-            cv2.line(img_binary_lines, (x1, y1), (x2, y2), (0, 0, 255), 2)
+            for line in my_lines:
+                x1, y1, x2, y2 = line.get_limits()
+                cv2.line(img_binary_lines, (x1, y1), (x2, y2), (0, 0, 255), 2)
 
-        cv2.imshow('img_lines', resize(img_lines, width=900))
-        cv2.imshow('img_binary_lines', resize(img_binary_lines, width=900))
+        # cv2.imshow('img_lines', resize(img_lines, width=900))
+        cv2.imshow('img_lines', img_lines)
+        # cv2.imshow('img_binary_lines', resize(img_binary_lines, width=900))
+        cv2.imshow('img_binary_lines', img_binary_lines)
         k = cv2.waitKey(10) & 0xFF
         if k == 27:
             break
@@ -148,6 +152,7 @@ def show_trackbar_hough(edges):
     max_rho = 20
     max_theta = 20
     cv2.namedWindow('track')
+    cv2.createTrackbar('width', 'track', 900, 1200, nothing)
     cv2.createTrackbar('thresh', 'track', 100, max_thresh, nothing)
     cv2.createTrackbar('minLineLength', 'track', 5, max_minLineLength, nothing)
     cv2.createTrackbar('maxLineGa', 'track', 5, max_maxLineGap, nothing)
@@ -156,24 +161,43 @@ def show_trackbar_hough(edges):
     show_hough(edges)
 
 
-def preprocess_im(frame):
+def preprocess_im(frame, using_webcam=False):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     gray_enhance = (gray - gray.min()) * int(255 / (gray.max() - gray.min()))
-    # show_trackbar_adap_thresh(gray_enhance)
-    blurred = cv2.GaussianBlur(gray_enhance, (5, 5), 0)
+    if display_prepro_big:
+        show_trackbar_adap_thresh(gray_enhance)
 
-    thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 21, 7)
-    thresh_not = cv2.bitwise_not(thresh)
+    if using_webcam:
+        thresh = cv2.adaptiveThreshold(gray_enhance, 255,
+                                       cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,
+                                       block_size_webcam_big, mean_sub_webcam_big)
 
-    # kernel_open = np.ones((3, 3), np.uint8)
-    # opening = cv2.morphologyEx(thresh_not, cv2.MORPH_OPEN, kernel_open)  # Denoise
-    kernel_close = np.ones((5, 5), np.uint8)
-    closing = cv2.morphologyEx(thresh_not, cv2.MORPH_CLOSE, kernel_close)  # Delete space between line
-    # dilate = cv2.morphologyEx(opening, cv2.MORPH_DILATE, kernel_close) # Delete space between line
-    #
-    return closing
-    # return thresh_not
+        thresh_not = cv2.bitwise_not(thresh)
+
+        dilate = cv2.morphologyEx(thresh_not, cv2.MORPH_DILATE, np.ones((3, 3), np.uint8))  # Delete space between line
+
+        return dilate
+
+        # kernel_close = np.ones((5, 5), np.uint8)
+        # closing = cv2.morphologyEx(thresh_not, cv2.MORPH_CLOSE, kernel_close)  # Delete space between line
+        # return closing
+    else:
+        blurred = cv2.GaussianBlur(gray_enhance, (5, 5), 0)
+        thresh = cv2.adaptiveThreshold(blurred, 255,
+                                       cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,
+                                       block_size_big, mean_sub_big)
+
+        thresh_not = cv2.bitwise_not(thresh)
+
+        # kernel_open = np.ones((3, 3), np.uint8)
+        # opening = cv2.morphologyEx(thresh_not, cv2.MORPH_OPEN, kernel_open)  # Denoise
+        kernel_close = np.ones((5, 5), np.uint8)
+        closing = cv2.morphologyEx(thresh_not, cv2.MORPH_CLOSE, kernel_close)  # Delete space between line
+        dilate = cv2.morphologyEx(closing, cv2.MORPH_DILATE, kernel_close)  # Delete space between line
+        #
+        # return closing
+        return dilate
 
 
 def flood_fill_grid(thresh):
@@ -271,12 +295,6 @@ def find_corners(contour):
     return [top_left, top_right, bottom_right, bottom_left]
 
 
-# size_min_contours_ratio = 1.0/30
-ratio_lim = 1.5
-smallest_area = 75000
-approx_poly_coef = 0.1
-
-
 def look_for_corners(img_lines, display=False):
     if display:
         # img_contours = np.zeros((img_lines.shape[0], img_lines.shape[1], 3), np.uint8)
@@ -285,19 +303,16 @@ def look_for_corners(img_lines, display=False):
         img_contours = None
 
     contours, _ = cv2.findContours(img_lines, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    biggest_area = 0
     best_contours = []
+    contours = sorted(contours, key=cv2.contourArea, reverse=True)
+
+    biggest_area = cv2.contourArea(contours[0])
+
     for cnt in contours:
         area = cv2.contourArea(cnt)
-        if area < smallest_area:
-            continue
-        if area > biggest_area * ratio_lim:
-            peri = cv2.arcLength(cnt, True)
-            approx = cv2.approxPolyDP(cnt, approx_poly_coef * peri, True)
-            if len(approx) == 4:
-                best_contours = [approx]
-                biggest_area = area
-        elif area > biggest_area / ratio_lim:
+        if area < smallest_area_allow:
+            break
+        if area > biggest_area / ratio_lim:
             peri = cv2.arcLength(cnt, True)
             approx = cv2.approxPolyDP(cnt, approx_poly_coef * peri, True)
             if len(approx) == 4:
@@ -326,47 +341,45 @@ def look_for_corners(img_lines, display=False):
         return corners, img_lines, img_contours
 
 
-thresh_hough = 500
-thresh_hough_p = 170
-minLineLength_h_p = 5
-maxLineGap_h_p = 5
-hough_rho = 3
-hough_theta = 3 * np.pi / 180
+# @timer_decorator
+def get_lines_and_corners(img, edges, use_hough=False, display=False):
+    if use_hough:
+        # t0 = time.time()
+        my_lines = []
+        img_lines = np.zeros((img.shape[:2]), np.uint8)
+        # edges_resize = my_resize(edges, width=resize_width_hough,height=resize_height_hough)
+        # print(edges_resize.shape)
+        lines_raw = cv2.HoughLinesP(edges,
+                                    rho=hough_rho, theta=hough_theta,
+                                    threshold=thresh_hough_p,
+                                    minLineLength=minLineLength_h_p, maxLineGap=maxLineGap_h_p)
+        # t1 = time.time()
 
-# display_line_on_edges = True
-display_line_on_edges = False
+        for line in lines_raw:
+            # my_lines.append(MyHoughPLines(line, ratio=ratio_resize))
+            my_lines.append(MyHoughPLines(line))
+        # t2 = time.time()
 
+        for line in my_lines:
+            x1, y1, x2, y2 = line.get_limits()
+            cv2.line(img_lines, (x1, y1), (x2, y2), 255, 2)
+        # cv2.imshow('img_lines', img_lines)
+        # cv2.waitKey()
+        if display_line_on_edges:
+            show_trackbar_hough(edges)
+        # t3 = time.time()
+        #
+        # total_time = t3 - t0
+        # prepro_time = t1 - t0
+        # print("INSIDE Hough Transfrom \t{:.1f}% - {:.3f}s".format(100 * prepro_time / total_time, prepro_time))
+        # hough_time = t2 - t1
+        # print("INSIDE LINES \t\t{:.1f}% - {:.3f}s".format(100 * hough_time / total_time, hough_time))
+        # undistort_time = t3 - t2
+        # print("INSIDE DRAWS LINE \t{:.1f}% - {:.3f}s".format(100 * undistort_time / total_time, undistort_time))
+        # print("INSIDE EVERYTHING DONE \t{:.2f}s".format(total_time))
 
-def get_p_hough_transform(img, edges, display=False):
-    # t0 = time.time()
-    my_lines = []
-    img_lines = np.zeros((img.shape[:2]), np.uint8)
-    lines_raw = cv2.HoughLinesP(edges, rho=hough_rho, theta=hough_theta, threshold=thresh_hough_p,
-                                minLineLength=minLineLength_h_p, maxLineGap=maxLineGap_h_p)
-    # t1 = time.time()
-
-    for line in lines_raw:
-        my_lines.append(MyHoughPLines(line))
-    # t2 = time.time()
-
-    for line in my_lines:
-        x1, y1, x2, y2 = line.get_limits()
-        cv2.line(img_lines, (x1, y1), (x2, y2), 255, 2)
-    # cv2.imshow('img_lines', img_lines)
-    # cv2.waitKey()
-    if display_line_on_edges:
-        show_trackbar_hough(edges)
-    # t3 = time.time()
-    #
-    # total_time = t3 - t0
-    # prepro_time = t1 - t0
-    # print("INSIDE Hough Transfrom \t{:.1f}% - {:.3f}s".format(100 * prepro_time / total_time, prepro_time))
-    # hough_time = t2 - t1
-    # print("INSIDE LINES \t\t\t{:.1f}% - {:.3f}s".format(100 * hough_time / total_time, hough_time))
-    # undistort_time = t3 - t2
-    # print("INSIDE DRAWS LINE \t\t{:.1f}% - {:.3f}s".format(100 * undistort_time / total_time, undistort_time))
-    # print("INSIDE EVERYTHING DONE \t{:.2f}s".format(total_time))
-
+    else:
+        img_lines = edges.copy()
     return look_for_corners(img_lines, display)
 
 
@@ -400,76 +413,60 @@ def get_hough_transform(img, edges, display=False):
         return grid_limits, img, img_after_merge
 
 
-target_h, target_w = 450, 450
-
-
-def undistorted_grids(im, points_grids, ratio):
+def undistorted_grids(frame, points_grids, ratio):
     undistorted = []
     true_points_grids = []
+    transfo_matrix = []
     for points_grid in points_grids:
-        points_grid = np.array(points_grid, dtype=np.float32)
-        # h_im, w_im = im.shape[:2]
-        # final_pts = np.array([[0, 0], [h_im - 1, 0], [h_im - 1, w_im - 1], [0, w_im - 1]], dtype=np.float32)
-        final_pts = np.array([[0, 0], [target_h - 1, 0], [target_h - 1, target_w - 1], [0, target_w - 1]],
-                             dtype=np.float32)
+        points_grid = np.array(points_grid, dtype=np.float32) * ratio
+        final_pts = np.array(
+            [[0, 0], [target_h_grid - 1, 0],
+             [target_h_grid - 1, target_w_grid - 1], [0, target_w_grid - 1]],
+            dtype=np.float32)
         M = cv2.getPerspectiveTransform(points_grid, final_pts)
-        undistorted.append(cv2.warpPerspective(im, M, (target_w, target_h)))
+        undistorted.append(cv2.warpPerspective(frame, M, (target_w_grid, target_h_grid)))
         # cv2.imshow("test",undistorted[-1])
         # cv2.waitKey()
-        true_points_grids.append(points_grid * ratio)
-    return undistorted, true_points_grids
+        true_points_grids.append(points_grid)
+        transfo_matrix.append(np.linalg.inv(M))
+    return undistorted, true_points_grids, transfo_matrix
 
 
-def main_grid_detector_img(frame, display=False, resized=False):
-    # flood_fill_grid = False
-    # grid = None
-    use_p_hough = True
-    # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+def main_grid_detector_img(frame, resized=True, display=False, using_webcam=False, use_hough=False):
     if not resized:
-        frame_resize = resize(frame, height=900, width=900)
+        frame_resize = my_resize(frame, width=param_resize_width, height=param_resize_height)
     else:
         frame_resize = frame
     ratio = frame.shape[0] / frame_resize.shape[0]
-    prepro_im = preprocess_im(frame_resize)
-    # if flood_fill_grid:
-    #     grid = flood_fill_grid(prepro_im)
-    # canny = cv2.Canny(frame, 50, 150)
+    prepro_im_edges = preprocess_im(frame_resize, using_webcam)
 
     if display:
-        if use_p_hough:
-            extreme_points, img_lines, img_contour = get_p_hough_transform(frame_resize.copy(), prepro_im, display)
-            show_big_image(frame_resize, prepro_im, img_lines, img_contour)
+        extreme_points_biased, img_lines, img_contour = get_lines_and_corners(frame_resize.copy(), prepro_im_edges,
+                                                                              use_hough=use_hough, display=display)
+        show_big_image(frame_resize, prepro_im_edges, img_lines, img_contour, use_hough)
 
-        else:
-            extreme_points, img_hough, img_after_merge = get_hough_transform(frame_resize.copy(), prepro_im, display)
-            cv2.imshow('frame_resize', frame_resize)
-            cv2.imshow('prepro_im', prepro_im)
-            cv2.imshow('img_hough', img_hough)
-            cv2.imshow('img_after_merge', img_after_merge)
     else:
-        if use_p_hough:
-            extreme_points = get_p_hough_transform(frame_resize.copy(), prepro_im)
-        else:
-            extreme_points = get_hough_transform(frame_resize.copy(), prepro_im)
+        extreme_points_biased = get_lines_and_corners(frame_resize.copy(), prepro_im_edges, use_hough=use_hough,
+                                                      display=display)
 
-    if extreme_points is None:
-        return None, None
-
-    grids_final, points_grids = undistorted_grids(frame_resize, extreme_points, ratio)
-    return grids_final, points_grids
+    if extreme_points_biased is None:
+        return None, None, None
+    grids_final, points_grids, transfo_matrix = undistorted_grids(frame, extreme_points_biased, ratio)
+    return grids_final, points_grids, transfo_matrix
 
 
 if __name__ == '__main__':
-    # im_path = "../dataset_test/115.jpg"
-    # im_path = "../images_test/sudoku5.jpg"
-    # im_path = "../images_test/sudoku6.jpg"
-    im_path = "../tmp/027.jpg"
-    # im_path = "../images_test/imagedouble.jpg"
+    # im_path = "dataset_test/021.jpg"
+    im_path = "images_test/sudoku.jpg"
+    # im_path = "tmp/030.jpg"
+    # im_path = "images_test/imagedouble.jpg"
+    # im_path = "images_test/izi_distord.jpg"
     im = cv2.imread(im_path)
 
-    res_grids_final, _ = main_grid_detector_img(im, True)
+    res_grids_final, _, _ = main_grid_detector_img(im, resized=False, display=True,
+                                                   using_webcam=False, use_hough=True)
     if res_grids_final is not None:
         for (i, im_grid) in enumerate(res_grids_final):
             cv2.imshow('grid_final_{}'.format(i), im_grid)
-            # cv2.imwrite('../images_test/grid_cut_{}.jpg'.format(i), im_grid)
+            cv2.imwrite('images_test/grid_cut_{}.jpg'.format(i), im_grid)
     cv2.waitKey()

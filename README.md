@@ -101,16 +101,6 @@ For that use the parameter `-mp path/to/your/model`
 I trained mine personally with on a dataset of 10k numeric digits
 with data augmentation. It gave me a precision of 99.5+ %
 
-### Actual solving logger - 6 Grid Madness
-Load everything 	63.3% - 1.029s  (Libraries + Keras Weights)
-Grid Research 		15.8% - 0.257s  
-Digits Extraction 	14.4% - 0.234s  
-Grid Solving 		3.6% - 0.058s  
-Image recreation 	3.0% - 0.049s  
-EVERYTHING DONE 	1.63s  
-
---> Except the importing phase (on which I am powerless), 
-I will take a look on multi-threading to improve the execution time
 
 ### TODO LIST
 
@@ -124,6 +114,11 @@ I will take a look on multi-threading to improve the execution time
 
 ### VERSION LIST
 
+- v1.6 : Multiple performance improvement | 19/05/19
+    - Optimize method for solving
+    - Optimize method for grid detection
+    - Improve Robustness
+    It is now able do deal with Real-Time
 - v1.5 : Stabilizing video resolution | 12/05/19
     - Multiple checking if the grid is well detect
     - Jump solving step if seems to be already solved !

@@ -8,32 +8,32 @@ from keras.models import load_model
 import tensorflow as tf
 import sys
 import time
-from src.fonctions import resize
+from src.fonctions import my_resize
+from src.settings import *
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 tf.logging.set_verbosity(tf.logging.ERROR)
 save_folder = "images_save/"
 
 
-def main_process_img(im_path, model, save=False, display=False):
-    resized = False
+def main_process_img(im_path, model, save=False, display=False, use_hough=True):
     init = time.time()
     frame = cv2.imread(im_path)  # TODO Check if image not well oriented - EXIF data
     init0 = time.time()
     if frame is None:
-        print("This path doesn't lead to a frame")
+        logger.error("This path doesn't lead to a frame")
         sys.exit(3)
-    if frame.shape[0] > 1000:
-        frame = resize(frame, height=900, width=900)
-        resized = True
-    im_grids_final, points_grids = main_grid_detector_img(frame, display=display, resized=resized)
+    if frame.shape[0] > 1000 or frame.shape[0] < 800:
+        frame = my_resize(frame, width=param_resize_width, height=param_resize_height)
+    im_grids_final, points_grids, list_transform_matrix = main_grid_detector_img(frame, display=display,
+                                                                                 use_hough=use_hough)
     found_grid_time = time.time()
     if im_grids_final is None:
-        print("No grid found")
+        logger.error("No grid found")
         sys.exit(3)
-    grids_matrix = process_extract_digits(im_grids_final, model, display=display)
+    grids_matrix = process_extract_digits(im_grids_final, model, display=display, display_digit=False)
     if all(elem is None for elem in grids_matrix):
-        print("Failed during extraction")
+        logger.error("Failed during digits extraction")
         sys.exit(3)
     extract_time = time.time()
     grids_solved = main_solve_grids(grids_matrix)
@@ -48,7 +48,7 @@ def main_process_img(im_path, model, save=False, display=False):
     solve_time = time.time()
 
     ims_filled_grid = write_solved_grids(im_grids_final, grids_matrix, grids_solved)
-    im_final = recreate_img_filled(frame, ims_filled_grid, points_grids)
+    im_final = recreate_img_filled(frame, ims_filled_grid, points_grids, list_transform_matrix)
     final_time = time.time()
 
     if save:
@@ -59,18 +59,23 @@ def main_process_img(im_path, model, save=False, display=False):
     total_time = final_time - init
 
     load_time = init0 - init
-    print("Load everything \t{:.1f}% - {:.3f}s".format(100 * load_time / total_time, load_time))
+    logger.info("Load Image\t\t\t{:03.1f}% - {:05.2f}ms".format(100 * load_time / total_time, 1000 * load_time))
     founding_time = found_grid_time - init0
-    print("Grid Research \t\t{:.1f}% - {:.3f}s".format(100 * founding_time / total_time, founding_time))
+    logger.info(
+        "Grid Research \t\t{:03.1f}% - {:05.2f}ms".format(100 * founding_time / total_time, 1000 * founding_time))
     extraction_duration = extract_time - found_grid_time
-    print(
-        "Digits Extraction \t{:.1f}% - {:.3f}s".format(100 * extraction_duration / total_time, extraction_duration))
+    logger.info(
+        "Digits Extraction \t{:03.1f}% - {:05.2f}ms".format(100 * extraction_duration / total_time,
+                                                            1000 * extraction_duration))
     solving_duration = solve_time - extract_time
-    print("Grid Solving \t\t{:.1f}% - {:.3f}s".format(100 * solving_duration / total_time, solving_duration))
+    logger.info(
+        "Grid Solving \t\t{:03.1f}% - {:05.2f}ms".format(100 * solving_duration / total_time, 1000 * solving_duration))
     recreation_duration = final_time - solve_time
-    print(
-        "Image recreation \t{:.1f}% - {:.3f}s".format(100 * recreation_duration / total_time, recreation_duration))
-    print("EVERYTHING DONE \t{:.2f}s".format(total_time))
+    logger.info(
+        "Image recreation \t{:03.1f}% - {:05.2f}ms".format(100 * recreation_duration / total_time,
+                                                           1000 * recreation_duration))
+    logger.info("PROCESS DURATION \t{:.2f}s".format(final_time - init0))
+    logger.info("EVERYTHING DONE \t{:.2f}s".format(total_time))
     # print(grid)
     # print(grid_solved)
 
@@ -92,9 +97,9 @@ if __name__ == '__main__':
         "images_test/imagedouble.jpg",  # 4
         "images_test/sudoku5.jpg",
         "images_test/sudoku6.jpg",
-        "dataset_test/004.jpg",  # 7
+        "dataset_test/001.jpg",  # 7
         "images_test/video_stop.png",  # 8
-        "tmp/027.jpg",  # 9
+        "tmp/035.jpg",  # 9
     ]
     im_path = im_paths[7]
     main_process_img(im_path, model, save=False, display=True)

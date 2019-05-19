@@ -1,8 +1,21 @@
 import cv2
 import os
+from time import time
 
 
-def resize(image, width=None, height=None, inter=cv2.INTER_AREA):
+def timer_decorator(func):
+    def f(*args, **kwargs):
+        before = time()
+        rv = func(*args, **kwargs)
+        after = time()
+        print("{:05.2f}ms elapsed in {}".format(1000*(after - before), func.__name__))
+        return rv
+
+    return f
+
+
+# @timer_decorator
+def my_resize(image, width=None, height=None, inter=cv2.INTER_LINEAR):  # INTER_AREA
     # initialize the dimensions of the image to be resized and
     # grab the image size
     dim = None
@@ -75,6 +88,9 @@ def create_gif(video_path, o_folder, fps=5, width=320):
 
 
 if __name__ == '__main__':
-    video_path_ = "/home/remi/PycharmProjects/sudoku-solver/videos_result/out_process_0.mp4"
-    o_folder_ = "/home/remi/PycharmProjects/sudoku-solver/videos_result/"
-    create_gif(video_path_, o_folder_, width=480)
+    # video_path_ = "/home/remi/PycharmProjects/sudoku-solver/videos_result/out_process_0.mp4"
+    # o_folder_ = "/home/remi/PycharmProjects/sudoku-solver/videos_result/"
+    # create_gif(video_path_, o_folder_, width=480)
+    im = cv2.imread("images_test/sudoku2.jpg")
+    my_resize(im, height=900)
+    my_resize(im, height=900, inter=cv2.INTER_AREA)

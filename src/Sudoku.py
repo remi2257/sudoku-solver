@@ -1,19 +1,22 @@
 import numpy as np
-import copy
+
+
+# from src.fonctions import timer_decorator
 
 
 class Sudoku:
-
     def __init__(self, sudo=None, grid=None):
+        self.possible_values_grid = np.empty((9, 9), dtype=list)
         if sudo is None:
             self.grid = np.zeros((9, 9), dtype=int)
-            self.possible_values_grid = np.empty((9, 9), dtype=list)
-            self.init_grid(grid)
             self.count_possible_grid = np.zeros((9, 9), dtype=int)
+            self.init_sudo(grid)
         else:
-            self.grid = copy.deepcopy(sudo.grid)
-            self.possible_values_grid = copy.deepcopy(sudo.possible_values_grid)
-            self.count_possible_grid = copy.deepcopy(sudo.count_possible_grid)
+            self.grid = sudo.grid.copy()
+            for y in range(9):
+                for x in range(9):
+                    self.possible_values_grid[y, x] = sudo.possible_values_grid[y, x].copy()
+            self.count_possible_grid = sudo.count_possible_grid.copy()
 
     def __str__(self):
         string = "-" * 18
@@ -29,25 +32,38 @@ class Sudoku:
     def apply_hypothesis_value(self, x, y, value):
         self.grid[y, x] = value
         self.possible_values_grid[y, x] = []
+        self.count_possible_grid[y, x] = 0
 
-    def init_grid(self, grid):
+        for y2 in range(9):
+            for x2 in range(9):
+                if is_affected(x, y, x2, y2) and self.grid[y2, x2] == 0:
+                    list_possible_values = self.possible_values_grid[y2, x2]
+                    if value in list_possible_values:
+                        list_possible_values.remove(value)
+                        new_len = len(list_possible_values)
+                        self.count_possible_grid[y2, x2] = new_len
+
+    def init_sudo(self, grid):
         for y in range(9):
             for x in range(9):
                 value = grid[y][x]
                 self.grid[y, x] = value
                 if value == 0:
-                    self.possible_values_grid[y, x] = list(range(1, 10))
+                    self.possible_values_grid[y, x] = [1, 2, 3, 4, 5, 6, 7, 8, 9]  # list(range(1, 10))
+                    self.count_possible_grid[y, x] = 9
                 else:
                     self.possible_values_grid[y, x] = []
+        self.get_possible_values()
 
     def is_filled(self):
         return 0 not in self.grid
 
+    # @timer_decorator
     def get_possible_values(self):
         for y in range(9):
             for x in range(9):
                 if self.grid[y, x] != 0:
-                    self.count_possible_grid[y, x] = 0
+                    # self.count_possible_grid[y, x] = 0
                     continue
                 possible_values = self.get_1_possible_values(x, y)
                 self.possible_values_grid[y, x] = possible_values
@@ -81,24 +97,35 @@ class Sudoku:
             if value in square:
                 possible_values.remove(value)
 
-    def apply_unique_possibility(self):
-        list_x_add = []
-        list_y_add = []
-        list_add_val = []
+    def apply_and_actualize(self, x, y, value):
+        self.grid[y, x] = value
+        self.possible_values_grid[y, x] = []
+        self.count_possible_grid[y, x] = 0
+
+        for y2 in range(9):
+            for x2 in range(9):
+                if is_affected(x, y, x2, y2) and self.grid[y2, x2] == 0:
+                    list_possible_values = self.possible_values_grid[y2, x2]
+                    if value in list_possible_values:
+                        list_possible_values.remove(value)
+                        new_len = len(list_possible_values)
+                        if new_len == 0:
+                            return False
+                        self.count_possible_grid[y2, x2] = new_len
+        return True
+
+    def apply_unique_possibilities(self):
         for y in range(9):
             for x in range(9):
                 if self.grid[y, x] == 0 and self.count_possible_grid[y, x] == 1:
-                    # print("Adding", self.possible_values_grid[y, x][0], "at", x, y)
                     value = self.possible_values_grid[y, x][0]
-                    self.grid[y, x] = value
-                    self.possible_values_grid[y, x] = []
-                    list_x_add.append(x)
-                    list_y_add.append(y)
-                    list_add_val.append(value)
+                    if not self.apply_and_actualize(x, y, value):
+                        return False
 
-        if list_add_val == list(set(list_add_val)):
-            return True
-        return self.verify_new_result(zip(list_x_add, list_y_add))
+        return True
+        # if list_add_val == list(set(list_add_val)):
+        #     return True
+        # return self.verify_new_result(zip(list_x_add, list_y_add))
         # return True
 
     def verify_new_result(self, my_zip):
@@ -117,25 +144,6 @@ class Sudoku:
                 return False
 
         return True
-
-    '''
-    def verify_new_result(self, my_zip):
-        for x, y in my_zip:
-            grid = copy.deepcopy(self.grid)
-            grid[y, x] = 0
-            line = grid[y, :]
-            column = grid[:, x]
-            x1 = 3 * (x // 3)
-            y1 = 3 * (y // 3)
-            x2, y2 = x1 + 3, y1 + 3
-            square = grid[y1:y2, x1:x2]
-            val = self.grid[y, x]
-            if val in line or val in column or val in square:
-                return False
-
-        return True
-
-    '''
 
     def should_make_hypothesis(self):
         return 1 not in self.count_possible_grid
@@ -162,7 +170,7 @@ class Sudoku:
         # ok = True
         for y in range(9):
             for x in range(9):
-                grid = copy.deepcopy(self.grid)
+                grid = self.grid.copy()
                 grid[y, x] = 0
                 line = grid[y, :]
                 column = grid[:, x]
@@ -185,7 +193,7 @@ def verify_viable_grid(grid_tested):
         for x in range(9):
             if grid_tested[y, x] == 0:
                 continue
-            grid = copy.deepcopy(grid_tested)
+            grid = grid_tested.copy()
             grid[y, x] = 0
             line = grid[y, :]
             column = grid[:, x]
@@ -199,3 +207,15 @@ def verify_viable_grid(grid_tested):
                 return False
 
     return True
+
+
+def is_affected(x1, y1, x2, y2):
+    if x1 == x2:
+        return True
+    if y1 == y2:
+        return True
+
+    if x1 // 3 == x2 // 3 and y1 // 3 == y2 // 3:
+        return True
+
+    return False

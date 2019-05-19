@@ -6,11 +6,12 @@ thresh_theta = 7.0 * np.pi / 180
 
 class MyHoughPLines:
 
-    def __init__(self, line_raw):
-        self.x1 = line_raw[0][0]
-        self.y1 = line_raw[0][1]
-        self.x2 = line_raw[0][2]
-        self.y2 = line_raw[0][3]
+    def __init__(self, line_raw, ratio=1):
+        line_raw = line_raw[0]
+        self.x1 = int(line_raw[0]*ratio)
+        self.y1 = int(line_raw[1]*ratio)
+        self.x2 = int(line_raw[2]*ratio)
+        self.y2 = int(line_raw[3]*ratio)
 
         self.isMerged = False
         self.number_of_merged = 1

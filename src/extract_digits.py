@@ -4,11 +4,27 @@ import os
 from keras.models import load_model
 import tensorflow as tf
 from src.Sudoku import verify_viable_grid
+from src.settings import *
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 tf.logging.set_verbosity(tf.logging.ERROR)
 
-thresh_conf_cnn = 0.995
+
+def find_adapted_thresh(preds_proba):
+    confs = []
+    for pred_proba in preds_proba:
+        confs.append(max(pred_proba))
+    confs = sorted(confs, reverse=True)
+    best_confs = np.mean(confs[:digits_2_check])
+    norm_conf = 10 * best_confs - 9
+    if norm_conf >= thresh_conf_cnn_high:
+        return thresh_conf_cnn_high
+
+    return thresh_conf_cnn
+
+
+def nothing(x):
+    pass
 
 
 def show_thresh(gray_enhance):
@@ -24,32 +40,34 @@ def show_thresh(gray_enhance):
         C = max(3, 1 + 2 * cv2.getTrackbarPos('B', 'track'))
         D = cv2.getTrackbarPos('M', 'track')
         adap = cv2.getTrackbarPos('M/G', 'track')
+        blur_size = 2 * cv2.getTrackbarPos('blur_size', 'track') + 1
         if adap == 0:
             adap = cv2.ADAPTIVE_THRESH_MEAN_C
         else:
             adap = cv2.ADAPTIVE_THRESH_GAUSSIAN_C
-        blurred = cv2.GaussianBlur(gray_enhance, (3, 3), 0)
+        blurred = cv2.GaussianBlur(gray_enhance, (blur_size, blur_size), 0)
         thresh = cv2.adaptiveThreshold(gray_enhance, 255, adap, cv2.THRESH_BINARY, A, B)
         thresh2 = cv2.adaptiveThreshold(blurred, 255, adap, cv2.THRESH_BINARY, C, D)
 
         cv2.imshow('thresh', thresh)
-        cv2.imshow('thresh2', thresh2)
+        cv2.imshow('thresh_with_blur', thresh2)
 
 
-def show_trackbar(gray_enhance):
-    max_block = 40
-    max_mean = 20
+def show_trackbar_thresh(gray_enhance):
+    max_block = 60
+    max_mean = 80
     cv2.namedWindow('track')
-    cv2.createTrackbar('B1', 'track', 10, max_block, show_thresh)
-    cv2.createTrackbar('M1', 'track', 13, max_mean, show_thresh)
-    cv2.createTrackbar('B', 'track', 10, max_block, show_thresh)
-    cv2.createTrackbar('M', 'track', 13, max_mean, show_thresh)
-    cv2.createTrackbar('M/G', 'track', 0, 1, show_thresh)
+    cv2.createTrackbar('B1', 'track', block_size_grid // 2 + 1, max_block, nothing)
+    cv2.createTrackbar('M1', 'track', mean_sub_grid, max_mean, nothing)
+    cv2.createTrackbar('B', 'track', block_size_grid // 2 + 1, max_block, nothing)
+    cv2.createTrackbar('M', 'track', mean_sub_grid, max_mean, nothing)
+    cv2.createTrackbar('M/G', 'track', 0, 1, nothing)
+    cv2.createTrackbar('blur_size', 'track', 5, 10, nothing)
     show_thresh(gray_enhance)
 
 
-def show_big_image(im, im_prepro, im_contours, pre_filled):
-    from src.fonctions import resize
+def show_big_image(im, im_prepro, im_contours, pre_filled, display_annot=False):
+    from src.fonctions import my_resize
     color_text = (0, 0, 255)
     # WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
@@ -60,57 +78,61 @@ def show_big_image(im, im_prepro, im_contours, pre_filled):
     top = np.concatenate((im, cv2.cvtColor(im_prepro, cv2.COLOR_GRAY2BGR)), axis=1)
     bot = np.concatenate((im_contours, pre_filled), axis=1)
     im_res = np.concatenate((top, bot), axis=0)
-    h_im, w_im, _ = im_res.shape
 
-    text1 = "0/ Initial Grid"
-    text2 = "1/ Preprocessed Grid"
-    text3 = "2/ Digits Detection"
-    text4 = "3/ Digits Identification"
+    if display_annot:
+        h_im, w_im, _ = im_res.shape
 
-    (text_width, text_height) = cv2.getTextSize(text1, my_font, fontScale=my_font_scale, thickness=m_thickness)[0]
-    cv2.rectangle(im_res, (0, 0),
-                  (text_width + 15, text_height + 15),
-                  BLACK, cv2.FILLED)
-    cv2.putText(im_res, text1,
-                (5, text_height + 5),
-                my_font, my_font_scale, color_text, m_thickness)
+        text1 = "0/ Initial Grid"
+        text2 = "1/ Preprocessed Grid"
+        text3 = "2/ Digits Detection"
+        text4 = "3/ Digits Identification"
 
-    (text_width, text_height) = cv2.getTextSize(text2, my_font, fontScale=my_font_scale, thickness=m_thickness)[0]
-    cv2.rectangle(im_res, (w_im // 2, 0),
-                  (w_im // 2 + text_width + 15, text_height + 15),
-                  BLACK, cv2.FILLED)
-    cv2.putText(im_res, text2,
-                (w_im // 2 + 5, text_height + 5),
-                my_font, my_font_scale, color_text, m_thickness)
+        (text_width, text_height) = cv2.getTextSize(text1, my_font, fontScale=my_font_scale, thickness=m_thickness)[0]
+        cv2.rectangle(im_res, (0, 0),
+                      (text_width + 15, text_height + 15),
+                      BLACK, cv2.FILLED)
+        cv2.putText(im_res, text1,
+                    (5, text_height + 5),
+                    my_font, my_font_scale, color_text, m_thickness)
 
-    (text_width, text_height) = cv2.getTextSize(text3, my_font, fontScale=my_font_scale, thickness=m_thickness)[0]
-    cv2.rectangle(im_res, (0, h_im // 2),
-                  (text_width + 15, h_im // 2 + text_height + 15),
-                  BLACK, cv2.FILLED)
-    cv2.putText(im_res, text3,
-                (5, h_im // 2 + text_height + 5),
-                my_font, my_font_scale, color_text, m_thickness)
+        (text_width, text_height) = cv2.getTextSize(text2, my_font, fontScale=my_font_scale, thickness=m_thickness)[0]
+        cv2.rectangle(im_res, (w_im // 2, 0),
+                      (w_im // 2 + text_width + 15, text_height + 15),
+                      BLACK, cv2.FILLED)
+        cv2.putText(im_res, text2,
+                    (w_im // 2 + 5, text_height + 5),
+                    my_font, my_font_scale, color_text, m_thickness)
 
-    (text_width, text_height) = cv2.getTextSize(text4, my_font, fontScale=my_font_scale, thickness=m_thickness)[0]
-    cv2.rectangle(im_res, (w_im // 2, h_im // 2),
-                  (w_im // 2 + text_width + 15, h_im // 2 + text_height + 15),
-                  BLACK, cv2.FILLED)
-    cv2.putText(im_res, text4,
-                (w_im // 2 + 5, h_im // 2 + text_height + 5),
-                my_font, my_font_scale, color_text, m_thickness)
+        (text_width, text_height) = cv2.getTextSize(text3, my_font, fontScale=my_font_scale, thickness=m_thickness)[0]
+        cv2.rectangle(im_res, (0, h_im // 2),
+                      (text_width + 15, h_im // 2 + text_height + 15),
+                      BLACK, cv2.FILLED)
+        cv2.putText(im_res, text3,
+                    (5, h_im // 2 + text_height + 5),
+                    my_font, my_font_scale, color_text, m_thickness)
 
-    cv2.imshow('res', resize(im_res, height=500))
+        (text_width, text_height) = cv2.getTextSize(text4, my_font, fontScale=my_font_scale, thickness=m_thickness)[0]
+        cv2.rectangle(im_res, (w_im // 2, h_im // 2),
+                      (w_im // 2 + text_width + 15, h_im // 2 + text_height + 15),
+                      BLACK, cv2.FILLED)
+        cv2.putText(im_res, text4,
+                    (w_im // 2 + 5, h_im // 2 + text_height + 5),
+                    my_font, my_font_scale, color_text, m_thickness)
+
+    cv2.imshow('res', my_resize(im_res, height=600))
 
 
-def preprocess_im(im, is_gray=False):
+def preprocessing_im_grid(im, is_gray=False):
     if is_gray:
         gray = im
     else:
         gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
     gray_enhance = (gray - gray.min()) * int(255 / (gray.max() - gray.min()))
-    blurred = cv2.GaussianBlur(gray_enhance, (3, 3), 0)
-    thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 43, 12)
-    # show_trackbar_adap_thresh(gray_enhance)
+    blurred = cv2.GaussianBlur(gray_enhance, (11, 11), 0)
+    thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_MEAN_C,
+                                   cv2.THRESH_BINARY, block_size_grid, mean_sub_grid)
+    if display_prepro_grid:
+        show_trackbar_thresh(gray_enhance)
 
     return thresh, gray_enhance
 
@@ -172,17 +194,6 @@ def fill_numeric_grid(preds, loc_digits, h_im, w_im):
     return grid
 
 
-thresh_offset = 5
-thresh_h_low = 10
-thresh_h_high = 50
-thresh_area_low = 210
-thresh_area_high = 900
-l_case = 45
-l_border = 1
-offset_y = 2
-min_digits_extracted = 20
-
-
 def process_extract_digits(ims, model, display=False, display_digit=False):
     grids = []
     for im in ims:
@@ -198,16 +209,16 @@ def process_extract_digits_single(im, model, display=False, display_digit=False)
     # else:
     #     im = img
     h_im, w_im = im.shape[:2]
-    im_prepro, gray_enhance = preprocess_im(im)
+    im_prepro, gray_enhance = preprocessing_im_grid(im)
     im_contours = im.copy()
     contours, _ = cv2.findContours(im_prepro, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     img_digits = []
     loc_digits = []
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
-        # if abs((x + w / 2) // l_case) < thresh_offset or abs((y + h / 2) // l_case) < thresh_offset:
-        #     cv2.drawContours(im_contours, [cnt], -1, (255, 255, 0), 1)
-        #     continue
+        y_true, x_true = y + h / 2, x + w / 2
+        if x_true < lim_bord or y_true < lim_bord or x_true > w_im - lim_bord or y_true > h_im - lim_bord:
+            continue
         if thresh_h_low < h < thresh_h_high and thresh_area_low < w * h < thresh_area_high:
             if display:
                 cv2.drawContours(im_contours, [cnt], -1, (0, 255, 0), 1)
@@ -222,31 +233,40 @@ def process_extract_digits_single(im, model, display=False, display_digit=False)
             # digit_w_border = cv2.copyMakeBorder(digit, l_border, l_border, l_border, l_border,
             #                                     cv2.BORDER_CONSTANT, None, 255)
             img_digits.append(cv2.resize(digit_thresh, (28, 28), interpolation=cv2.INTER_NEAREST).reshape(28, 28, 1))
-            loc_digits.append([(y1 + y2) / 2, (x1 + x2) / 2])
-    img_digits_np = np.array(img_digits) / 255.0
+            loc_digits.append([y_true, x_true])
     if not img_digits:
-        return None
+        if display:
+            cv2.imshow("im_contours",im_contours)
+        return None,
+    img_digits_np = np.array(img_digits) / 255.0
     preds_proba = model.predict(img_digits_np)
 
     # preds = np.argmax(preds_proba, axis=1) + 1
     preds = []
     nbr_digits_extracted = 0
+    adapted_thresh_conf_cnn = find_adapted_thresh(preds_proba)
     for pred_proba in preds_proba:
         arg_max = np.argmax(pred_proba)
-        if pred_proba[arg_max] > thresh_conf_cnn:
+        if pred_proba[arg_max] > adapted_thresh_conf_cnn:
             preds.append(arg_max + 1)
             nbr_digits_extracted += 1
         else:
             preds.append(-1)
 
-    if nbr_digits_extracted < min_digits_extracted:
-        return None
-    grid = fill_numeric_grid(preds, loc_digits, h_im, w_im)
     if display_digit:
         for i in range(len(preds)):
-            cv2.imshow('pred_' + str(preds[i]) + "-" + str(max(preds_proba[i])), img_digits[i])
+            y, x = loc_digits[i]
+            cv2.imshow('pred_{} - {:.6f} - x/y : {}/{}'.format(preds[i], 100 * max(preds_proba[i]), int(x), int(y)),
+                       img_digits[i])
+
+    if nbr_digits_extracted < min_digits_extracted:
+        if display:
+            cv2.imshow("im_contours",im_contours)
+        return None
+    grid = fill_numeric_grid(preds, loc_digits, h_im, w_im)
+
     if display:
-        print(grid)
+        # print(grid)
         show_big_image(im, im_prepro, im_contours, fill_img_grid(im, grid))
 
     if verify_viable_grid(grid):
@@ -258,10 +278,12 @@ def process_extract_digits_single(im, model, display=False, display_digit=False)
 if __name__ == '__main__':
     model = load_model('model/my_model.h5')
 
-    im_path = "images_test/grid_cut_1.jpg"
+    im_path = "images_test/grid_cut_0.jpg"
     # im_path = "images_save/023_failed.jpg"
     # im_path = "images_test/izi.png"
     img = cv2.imread(im_path)
-    res_grids = process_extract_digits([img], model, display=True, display_digit=True)
+    cv2.imshow("img", img)
+    res_grids = process_extract_digits([img], model,
+                                       display=True, display_digit=True)
     cv2.waitKey()
     # print(res_grids)

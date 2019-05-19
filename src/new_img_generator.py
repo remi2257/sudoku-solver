@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import time
 
 color = (0, 155, 255)
 
@@ -8,12 +9,12 @@ font_scale = 1.2
 thickness = 2
 
 
-def recreate_img_filled(frame, im_grids, points_grids):
+def recreate_img_filled(frame, im_grids, points_grids, list_transform_matrix):
     # from src.fonctions import resize
 
     target_h, target_w = frame.shape[:2]
     im_final = frame.copy()
-    for im_grid, points_grid in zip(im_grids, points_grids):
+    for im_grid, points_grid, transform_matrix in zip(im_grids, points_grids, list_transform_matrix):
         if im_grid is None:
             new_im = np.zeros((frame.shape[0], frame.shape[1], 3), np.uint8)
             for point in points_grid:
@@ -22,15 +23,16 @@ def recreate_img_filled(frame, im_grids, points_grids):
             _, mask = cv2.threshold(cv2.cvtColor(new_im, cv2.COLOR_BGR2GRAY), 1, 255, cv2.THRESH_BINARY)
 
         else:
-            grid_h, grid_w = im_grid.shape[:2]
-            init_pts = np.array([[0, 0], [grid_h - 1, 0], [grid_h - 1, grid_w - 1], [0, grid_w - 1]], dtype=np.float32)
-            transform_matrix = cv2.getPerspectiveTransform(init_pts, points_grid)
+            # grid_h, grid_w = im_grid.shape[:2]
+            # init_pts = np.array([[0, 0], [grid_h - 1, 0], [grid_h - 1, grid_w - 1], [0, grid_w - 1]], dtype=np.float32)
+            # transform_matrix = cv2.getPerspectiveTransform(init_pts, points_grid)
             new_im = cv2.warpPerspective(im_grid, transform_matrix, (target_w, target_h))
+
             _, mask = cv2.threshold(cv2.cvtColor(new_im, cv2.COLOR_BGR2GRAY), 1, 255, cv2.THRESH_BINARY)
+
         im_final = cv2.bitwise_and(im_final, im_final, mask=cv2.bitwise_not(mask))
         im_final = cv2.add(im_final, new_im)
-        # cv2.imshow("res", resize(np.concatenate((new_im, im_final), axis=1),width=600))
-        # cv2.waitKey()
+
     return im_final
 
 
