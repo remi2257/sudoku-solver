@@ -165,7 +165,7 @@ def fill_img_grid(img, grid_matrix):
                 continue
             true_y, true_x = int((y + 0.2) * h_im / 9), int((x + 0.2) * w_im / 9)
             (text_width, text_height) = \
-            cv2.getTextSize(digit, font, fontScale=font_scale_small, thickness=thickness_small)[0]
+                cv2.getTextSize(digit, font, fontScale=font_scale_small, thickness=thickness_small)[0]
             cv2.putText(im_filled_grid, digit,
                         (true_x - int(text_width / 2), true_y + int(text_height / 2)),
                         font, font_scale_small, (0, 3, 0), thickness_small * 3)
@@ -199,7 +199,7 @@ def process_extract_digits(ims, model, display=False, display_digit=False):
     return grids
 
 
-def process_extract_digits_single(img, model, display=False, display_digit=False):
+def process_extract_digits_single(img, model, display=False, display_digit=False, save_images=False):
     # if resize:
     #     img = cv2.resize(img, (450, 450))
     # else:
@@ -210,6 +210,7 @@ def process_extract_digits_single(img, model, display=False, display_digit=False
     contours, _ = cv2.findContours(im_prepro, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     img_digits = []
     loc_digits = []
+
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
         y_true, x_true = y + h / 2, x + w / 2
@@ -240,10 +241,11 @@ def process_extract_digits_single(img, model, display=False, display_digit=False
     # preds = np.argmax(preds_proba, axis=1) + 1
     preds = []
     nbr_digits_extracted = 0
-    adapted_thresh_conf_cnn = find_adapted_thresh(preds_proba)
+    # adapted_thresh_conf_cnn = find_adapted_thresh(preds_proba)
+    adapted_thresh_conf_cnn = thresh_conf_cnn
     for pred_proba in preds_proba:
         arg_max = np.argmax(pred_proba)
-        if pred_proba[arg_max] > adapted_thresh_conf_cnn:
+        if pred_proba[arg_max] > adapted_thresh_conf_cnn and arg_max<9:
             preds.append(arg_max + 1)
             nbr_digits_extracted += 1
         else:
@@ -254,6 +256,17 @@ def process_extract_digits_single(img, model, display=False, display_digit=False
             y, x = loc_digits[i]
             cv2.imshow('pred_{} - {:.6f} - x/y : {}/{}'.format(preds[i], 100 * max(preds_proba[i]), int(x), int(y)),
                        img_digits[i])
+    if save_images:
+        for i in range(len(preds)):
+            pred = preds[i]
+            img_digit = img_digits[i]
+            class_name = "N" if pred == -1 else str(pred)
+            target_folder = os.path.join(my_dataset_path, class_name + "/")
+            if not os.path.isdir(target_folder):
+                os.mkdir(target_folder)
+            name = "{}_{}.jpg".format(class_name,len(os.listdir(target_folder)))
+            filename = os.path.join(target_folder, name)
+            cv2.imwrite(filename, img_digit)
 
     if nbr_digits_extracted < min_digits_extracted:
         if display:

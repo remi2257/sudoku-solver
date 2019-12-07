@@ -104,11 +104,11 @@ with data augmentation. It gave me a precision of 99.5+ %
 
 ### TODO LIST
 
-- [X] More Robust
-- [X] Video Live Solving
-- [X] Better
-- [X] Stronger
-- [X] Faster
+- [X] More Robust (v1.2)
+- [X] Video Live Solving (v1.4)
+- [X] Better (v1.5)
+- [X] Stronger (v1.6)
+- [X] Faster (v1.7)
 - [ ] Improve Training
 - [ ] ~~Multi-threading Processing~~
 

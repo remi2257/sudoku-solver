@@ -117,7 +117,7 @@ def data_augmentation_imgaug(dataset_root_folder):
 
 
 if __name__ == '__main__':
-    dataset_path = "/media/hdd_linux/DataSet/mnist_numeric/"
+    dataset_path = "/media/hdd_linux/DataSet/Mine/"
 
     # img_path_main = dataset_path + "4/1.png"
     # im = cv2.cvtColor(cv2.imread(img_path_main), cv2.COLOR_BGR2RGB)

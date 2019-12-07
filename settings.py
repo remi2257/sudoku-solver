@@ -12,6 +12,9 @@ tensorflow.compat.v1.logging.set_verbosity(tensorflow.compat.v1.logging.ERROR)
 
 CAMERA_PORT = 1
 
+# PATHS
+my_dataset_path = "/media/hdd_linux/DataSet/Mine/"
+
 # ----TEXT DISPLAY----#
 RED = (0, 0, 255)
 PURPLE = (255, 0, 255)

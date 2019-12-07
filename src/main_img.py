@@ -88,7 +88,7 @@ def main_process_img(im_path, model, save=False, display=False, use_hough=True):
 
 
 if __name__ == '__main__':
-    model = load_model('model/my_model.h5')
+    model = load_model('model/my_super_model.h5')
     im_paths = [
         "images_test/sudoku.jpg",
         "images_test/sudoku1.jpg",

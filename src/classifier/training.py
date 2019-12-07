@@ -113,12 +113,15 @@ def load_data(pickle_path, l_classes):
 
 if __name__ == '__main__':
     # --- CONST for training --- #
-    epochs = 20
-    batch_size = 32
-    validation_split = 0.15
+    epochs = 8
+    # epochs = 20
+    batch_size = 16
+    # batch_size = 32
+    validation_split = 0.1
 
     # --- PATH --- #
-    dataset_path = "/media/remi/hdd_linux/DataSet/mnist_numeric/"
+    # dataset_path = "/media/remi/hdd_linux/DataSet/mnist_numeric/"
+    dataset_path = "/media/hdd_linux/DataSet/Mine/"
     dataset_file = os.path.join(dataset_path, "mnist_numeric.pickle")
     names_file = os.path.join(dataset_path, "data.names")
     models_path = 'src/classifier/models/'

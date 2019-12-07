@@ -4,11 +4,11 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from keras.callbacks import ReduceLROnPlateau
-from keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPool2D
-from keras.models import Sequential
-from keras.optimizers import RMSprop
-from keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.callbacks import ReduceLROnPlateau
+from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPool2D
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import RMSprop
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from keras.utils.np_utils import to_categorical  # convert to one-hot-encoding
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
@@ -22,14 +22,15 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 handwritten = False
-include_zero = handwritten
+# include_zero = handwritten
+include_zero = True
 nbr_classes = 9 + int(include_zero)
 if handwritten:
     epochs = 4
     batch_size = 86
 else:
-    epochs = 20
-    batch_size = 32  # 86
+    epochs = 8 #20
+    batch_size = 16 #32  # 86
 
 datagen = ImageDataGenerator(
     featurewise_center=False,  # set input mean to 0 over the classifier
@@ -45,7 +46,7 @@ datagen = ImageDataGenerator(
     vertical_flip=False)  # randomly flip images_test
 
 # Set a learning rate annealer
-learning_rate_reduction = ReduceLROnPlateau(monitor='val_acc',
+learning_rate_reduction = ReduceLROnPlateau(monitor='val_accuracy',
                                             patience=3,
                                             verbose=1,
                                             factor=0.5,
@@ -88,8 +89,8 @@ def plot_history(history):
     ax[0].plot(history.history['val_loss'], color='r', label="validation loss", axes=ax[0])
     legend = ax[0].legend(loc='best', shadow=True)
 
-    ax[1].plot(history.history['acc'], color='b', label="Training accuracy")
-    ax[1].plot(history.history['val_acc'], color='r', label="Validation accuracy")
+    ax[1].plot(history.history['accuracy'], color='b', label="Training accuracy")
+    ax[1].plot(history.history['val_accuracy'], color='r', label="Validation accuracy")
     legend = ax[1].legend(loc='best', shadow=True)
 
 
@@ -172,7 +173,7 @@ def load_data(data_path, handwritten=False):
 
 
 def main():
-    continue_train = False
+    continue_train = True
     train = True
     data_augmentation = True
     separate = False
@@ -181,7 +182,8 @@ def main():
         dataset_path = "/media/hdd_linux/DataSet/mnist_handwritten/"
 
     else:
-        dataset_path = "/media/hdd_linux/DataSet/mnist_numeric/"
+        # dataset_path = "/media/hdd_linux/DataSet/mnist_numeric/"
+        dataset_path = "/media/hdd_linux/DataSet/Mine/"
 
     if already_split:
         x_train, y_train, x_test, y_test = load_data_split(dataset_path, handwritten)
@@ -192,13 +194,13 @@ def main():
     if continue_train or train:
 
         if continue_train:
-            from keras.models import load_model
-            models_path = '../../model/'
-            model_name = "{}model_1.h5".format(models_path, len(os.listdir(models_path)))
+            from tensorflow.keras.models import load_model
+            models_path = 'model/'
+            model_name = "{}my_super_model.h5".format(models_path, len(os.listdir(models_path)))
             model = load_model(model_name)
 
         else:
-            models_path = '../../model/'
+            models_path = 'model/'
             model = CNN_model()
 
         if not data_augmentation:

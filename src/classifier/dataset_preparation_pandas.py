@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-dataset_path = "/media/hdd_linux/DataSet/mnist_numeric/"
+dataset_path = "/media/hdd_linux/DataSet/Mine/"
 img_size = 28 * 28
 
 
@@ -15,14 +15,15 @@ def create_csv(data_path):
     folders_list = [data_path + path for path in os.listdir(data_path) if os.path.isdir(data_path + path)]
 
     folders_list = [folder for folder in folders_list if not folder.endswith(tuple(["train", "test"]))]
-    folders_list = sorted(folders_list, key=lambda x: int(os.path.basename(x)[0]))
+    folders_list = sorted(folders_list, key=lambda x: os.path.basename(x))
     # df = pd.DataFrame({"label": [],
     #                    "images_test": []})
     columns = ['label'] + ["pixel" + str(i) for i in range(img_size)]
     df = pd.DataFrame(columns=columns)
 
     for folder in tqdm(folders_list, total=len(folders_list), desc="Big Loop"):
-        label = int(os.path.basename(folder)[0])
+        name = os.path.basename(folder)[0]
+        label = 10 if name == "N" else int(name)
         folder += "/"
         file_list = [folder + im_path for im_path in os.listdir(folder) if os.path.isfile(folder + im_path)]
         # file_list = file_list[:200]
