@@ -1,16 +1,16 @@
-from src.grid_solver import main_solve_grids
-from src.grid_detector_img import main_grid_detector_img
-from src.extract_digits import process_extract_digits
-from src.new_img_generator import *
 import os
+import time
 import cv2
 from keras.models import load_model
-import tensorflow as tf
-from src.fonctions import my_resize
 from tqdm import tqdm
 
+from src.extract_n_solve.extract_digits import process_extract_digits
+from src.extract_n_solve.grid_detector_img import main_grid_detector_img
+from src.extract_n_solve.grid_solver import main_solve_grids
+from src.extract_n_solve.new_img_generator import *
+from src.useful_functions import my_resize
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-tf.logging.set_verbosity(tf.logging.ERROR)
 save_path = "images_save/"
 
 

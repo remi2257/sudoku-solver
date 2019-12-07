@@ -1,13 +1,12 @@
 import argparse
-import sys
-import tensorflow as tf
 import os
-from src.settings import logger
+import sys
+
+from settings import logger
 
 images_extension = [".jpg", ".jpeg", ".png", ".bmp", ".ash"]
 video_extension = [".mp4", ".avi"]
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-tf.logging.set_verbosity(tf.logging.ERROR)
 
 
 def help_profiles():

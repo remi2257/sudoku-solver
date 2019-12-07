@@ -1,18 +1,15 @@
-from src.grid_solver import main_solve_grids
-from src.grid_detector_img import main_grid_detector_img
-from src.extract_digits import process_extract_digits
-from src.new_img_generator import *
-import os
-import cv2
-from keras.models import load_model
-import tensorflow as tf
 import sys
 import time
-from src.fonctions import my_resize
-from src.settings import *
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-tf.logging.set_verbosity(tf.logging.ERROR)
+from tensorflow.keras.models import load_model
+
+from settings import *
+from src.extract_n_solve.extract_digits import process_extract_digits
+from src.extract_n_solve.grid_detector_img import main_grid_detector_img
+from src.extract_n_solve.grid_solver import main_solve_grids
+from src.extract_n_solve.new_img_generator import *
+from src.useful_functions import my_resize
+
 save_folder = "images_save/"
 
 
@@ -31,12 +28,15 @@ def main_process_img(im_path, model, save=False, display=False, use_hough=True):
     if im_grids_final is None:
         logger.error("No grid found")
         sys.exit(3)
+    logger.info("Grid(s) found")
     grids_matrix = process_extract_digits(im_grids_final, model, display=display, display_digit=False)
     if all(elem is None for elem in grids_matrix):
         logger.error("Failed during digits extraction")
         sys.exit(3)
+    logger.info("Extraction done")
     extract_time = time.time()
     grids_solved = main_solve_grids(grids_matrix)
+    logger.info("Solving done")
 
     if grids_solved is None:
         print(grids_matrix)
@@ -80,7 +80,7 @@ def main_process_img(im_path, model, save=False, display=False, use_hough=True):
     # print(grid_solved)
 
     if len(ims_filled_grid) == 1:
-        cv2.imshow('im', frame)
+        cv2.imshow('img', frame)
         cv2.imshow('grid_extract', im_grids_final[0])
         cv2.imshow('grid_filled', ims_filled_grid[0])
     cv2.imshow('im_final', im_final)
@@ -101,5 +101,5 @@ if __name__ == '__main__':
         "images_test/video_stop.png",  # 8
         "tmp/035.jpg",  # 9
     ]
-    im_path = im_paths[7]
+    im_path = im_paths[4]
     main_process_img(im_path, model, save=False, display=True)

@@ -108,9 +108,9 @@ with data augmentation. It gave me a precision of 99.5+ %
 - [X] Video Live Solving
 - [X] Better
 - [X] Stronger
-- [ ] Faster
+- [X] Faster
 - [ ] Improve Training
-- [ ] Multi-threading Processing
+- [ ] ~~Multi-threading Processing~~
 
 ### VERSION LIST
 

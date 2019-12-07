@@ -1,24 +1,21 @@
-from src.grid_solver import main_solve_grid
-from src.new_img_generator import *
-from src.SudokuVideo import *
-from src.extract_digits import process_extract_digits_single
-from src.grid_detector_img import main_grid_detector_img
 from keras.models import load_model
-from src.fonctions import *
-import time
-from src.settings import *
-from src.fonctions import timer_decorator
+
+from src.extract_n_solve.extract_digits import process_extract_digits_single
+from src.extract_n_solve.grid_detector_img import main_grid_detector_img
+from src.extract_n_solve.grid_solver import main_solve_grid
+from src.extract_n_solve.new_img_generator import *
+from src.solving_objects.SudokuVideo import *
+from src.useful_functions import *
+from src.video_objects.WebcamVideoStream import *
 
 
-def update_sudo_lists(list_possible_grid, using_webcam=False):
+def update_sudoku_lists(list_possible_grid, using_webcam=False):
     for i in reversed(range(len(list_possible_grid))):
         list_possible_grid[i].incr_last_apparition()
-        if list_possible_grid[i].isSolved:
-            if list_possible_grid[i].last_apparition > lim_apparition_solved * (1 + int(using_webcam)):
-                del list_possible_grid[i]
-        else:
-            if list_possible_grid[i].last_apparition > lim_apparition_not_solved * (1 + int(using_webcam)):
-                del list_possible_grid[i]
+        lim_time = (1 + int(using_webcam)) * (
+            lim_apparition_solved if list_possible_grid[i].isSolved else lim_apparition_not_solved)
+        if list_possible_grid[i].last_apparition > lim_time:
+            del list_possible_grid[i]
 
 
 def look_for_already_solved_grid(im_grids_final, list_possible_grid, points_grids):
@@ -74,28 +71,14 @@ def extract_digits_and_solve(im_grids_final, model, already_solved_list, list_po
                         grids_solved.append(sudoku.grid_solved)
                     break
             if not has_been_found:
-                list_possible_grid.append(SudokuVideo(grid_matrix))
-                grids_solved.append(None)
-
+                # list_possible_grid.append(SudokuVideo(grid_matrix))
+                # grids_solved.append(None)
+                pass
     return grids_matrix, grids_solved
 
 
-def write_FPS_normal(im, elapsed_time):
-    cv2.putText(im, "{:.2f} FPS".format(1 / elapsed_time),
-                (50, 80), font, 3, (0, 255, 0), 2)
-
-
-def write_FPS_webcam(im, elapsed_time):
-    cv2.putText(im, "{:.2f} FPS".format(1 / elapsed_time),
-                (20, 40), font, 1.5, (0, 255, 0), 1)
-
-
-def show_im_final(im_final, init_time, using_webcam):
-    if using_webcam:
-        write_FPS_webcam(im_final, time.time() - init_time)
-    else:
-        write_FPS_normal(im_final, time.time() - init_time)
-
+def show_im_final(im_final, init_time):
+    add_annotation_to_image(im_final, "{:.2f} FPS".format(1 / (time.time() - init_time)), write_on_top=True)
     cv2.imshow("im_final", im_final)
 
 
@@ -130,6 +113,7 @@ save_folder = "videos_result/"
 
 
 def main_grid_detector_video(model, video_path=None, save=0, display=True):
+    # Initialisation
     list_possible_grid, ims_filled_grid = [], None
     grids_solved = None
     points_grids_saved = list()
@@ -143,8 +127,10 @@ def main_grid_detector_video(model, video_path=None, save=0, display=True):
     frames_without_grid = 0
     create_windows(display=display)
     using_webcam = video_path is None
+
+    # Starting streaming
     if using_webcam:  # Use Webcam
-        cap = cv2.VideoCapture(0)
+        cap = WebcamVideoStream().start()
     else:
         cap = cv2.VideoCapture(video_path)
     output_video = None
@@ -159,64 +145,67 @@ def main_grid_detector_video(model, video_path=None, save=0, display=True):
         # (1920, 1080))
 
     while "User do not stop":
-        if cv2.waitKey(1) & 0xFF == 27:  # ord('q')
+        # -- Init the iteration
+        if cv2.waitKey(1) in keys_leave:  # ord('q')
             break
 
         init_time = time.time()
 
-        ret, frame = cap.read()
-        if not ret:
-            break
+        if using_webcam:
+            img = cap.read()
+        else:
+            ret, img = cap.read()
+            if not ret:
+                break
 
-        update_sudo_lists(list_possible_grid, using_webcam=using_webcam)
+        # Update Suodku Lists (for keeping already deteeted grids & deleting old ones)
+        update_sudoku_lists(list_possible_grid, using_webcam=using_webcam)
 
         read_time = time.time()
         logger.info("{}\nread&update_time \t{:05.2f}ms".format("-" * 20, 1000 * (read_time - init_time)))
 
-        im_grids_final, points_grids, list_transform_matrix = main_grid_detector_img(frame, display=display,
+        # --- LOOKING FOR GRIDS
+        # Try to detect grids !
+        im_grids_final, points_grids, list_transform_matrix = main_grid_detector_img(img, display=display,
                                                                                      resized=False,
                                                                                      using_webcam=using_webcam)
         grid_detection_time = time.time()
         logger.info("grid_detect_time \t{:05.2f}ms".format(1000 * (grid_detection_time - read_time)))
 
-        if im_grids_final is None:
+        if im_grids_final is None: # No grid has been found
             frames_without_grid += 1
             if frames_without_grid < lim_frames_without_grid and grids_solved is not None:
-                im_final = recreate_img_filled(frame, ims_filled_grid,
+                im_final = recreate_img_filled(img, ims_filled_grid,
                                                points_grids_saved, list_matrix_saved)
-                show_im_final(im_final, init_time, using_webcam)
+                show_im_final(im_final, init_time)
             else:
-                show_im_final(frame, init_time, using_webcam)
+                show_im_final(img, init_time)
             if save == 1:
-                output_video.write(my_resize(frame, w_vid_target))
+                output_video.write(my_resize(img, w_vid_target))
             if save == 3:
-                cv2.imwrite("tmp/{:03d}.jpg".format(ind_save), frame)
+                cv2.imwrite("tmp/{:03d}.jpg".format(ind_save), img)
                 ind_save += 1
             continue
-        # if im_grids_final is None:
-        #     frames_without_grid += 1
-        #     show_im_final(frame, init_time, using_webcam)
-        #     if save == 1:
-        #         output_video.write(my_resize(frame, w_vid_target))
-        #     if save == 3:
-        #         cv2.imwrite("tmp/{:03d}.jpg".format(ind_save), frame)
-        #         ind_save += 1
-        #     continue
 
+        logger.debug("{} grid(s) detected".format(len(im_grids_final)))
+
+        # -- EXTRACTING GRIDS
         points_grids_saved = points_grids.copy()
         list_matrix_saved = list_transform_matrix.copy()
 
+        # Checking if grids has been already solved with position
         already_solved = look_for_already_solved_grid(im_grids_final, list_possible_grid, points_grids)
+
         grids_matrix, grids_solved = extract_digits_and_solve(im_grids_final, model, already_solved, list_possible_grid,
                                                               points_grids)
         solving_time = time.time()
         logger.info("solving_time \t\t{:05.2f}ms".format(1000 * (solving_time - grid_detection_time)))
         if grids_solved is None:
-            show_im_final(frame, init_time, using_webcam)
+            show_im_final(img, init_time)
             if save == 1:
-                output_video.write(my_resize(frame, w_vid_target))
+                output_video.write(my_resize(img, w_vid_target))
             if save == 3:
-                cv2.imwrite("tmp/{:03d}.jpg".format(ind_save), frame)
+                cv2.imwrite("tmp/{:03d}.jpg".format(ind_save), img)
                 ind_save += 1
             continue
         frames_without_grid = 0
@@ -224,11 +213,11 @@ def main_grid_detector_video(model, video_path=None, save=0, display=True):
         write_time = time.time()
         logger.info("write_time \t\t{:05.2f}ms".format(1000 * (write_time - solving_time)))
 
-        im_final = recreate_img_filled(frame, ims_filled_grid, points_grids, list_transform_matrix)
+        im_final = recreate_img_filled(img, ims_filled_grid, points_grids, list_transform_matrix)
         recreation_time = time.time()
         logger.info("recreation_time \t{:05.2f}ms".format(1000 * (recreation_time - write_time)))
 
-        show_im_final(im_final, init_time, using_webcam)
+        show_im_final(im_final, init_time)
         show_time = time.time()
         logger.info("show_time \t\t{:05.2f}ms".format(1000 * (show_time - recreation_time)))
 
@@ -252,6 +241,6 @@ def main_grid_detector_video(model, video_path=None, save=0, display=True):
 
 if __name__ == '__main__':
     my_model = load_model('model/my_model.h5')
-    video_p = "/media/hdd_linux/Video/sudoku1.mp4"
-    main_grid_detector_video(my_model, video_path=video_p, save=1, display=True)
-    # main_grid_detector_video(model)
+    # video_p = "/media/hdd_linux/Video/sudoku1.mp4"
+    # main_grid_detector_video(my_model, video_path=video_p, save=1, display=True)
+    main_grid_detector_video(my_model)
