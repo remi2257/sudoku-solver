@@ -283,8 +283,8 @@ def find_corners(contour):
     mean_x = np.mean(contour[:, :, 0])
     mean_y = np.mean(contour[:, :, 1])
 
-    for i in range(len(contour)):
-        x, y = contour[i][0]
+    for j in range(len(contour)):
+        x, y = contour[j][0]
         if x > mean_x:  # On right
             if y > mean_y:  # On bottom
                 bottom_right = [x, y]
@@ -423,8 +423,8 @@ def undistorted_grids(frame, points_grids, ratio):
     for points_grid in points_grids:
         points_grid = np.array(points_grid, dtype=np.float32) * ratio
         final_pts = np.array(
-            [[0, 0], [target_h_grid - 1, 0],
-             [target_h_grid - 1, target_w_grid - 1], [0, target_w_grid - 1]],
+            [[0, 0], [target_w_grid - 1, 0],
+             [target_w_grid - 1, target_h_grid - 1], [0, target_h_grid - 1]],
             dtype=np.float32)
         M = cv2.getPerspectiveTransform(points_grid, final_pts)
         undistorted.append(cv2.warpPerspective(frame, M, (target_w_grid, target_h_grid)))
