@@ -5,7 +5,7 @@ Welcome to my project
 My algorithm is able to detect and to directly solve sudokus in VR
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/39727257/71027269-31146b00-210b-11ea-860e-47b591686cee.gif" width="500"/>
+<img src="https://user-images.githubusercontent.com/39727257/71028243-3b376900-210d-11ea-9e81-6ba1c7c27528.gif" width="500"/>
 </p>
 
 
