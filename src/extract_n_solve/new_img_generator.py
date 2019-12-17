@@ -1,3 +1,5 @@
+import time
+from settings import *
 import cv2
 import numpy as np
 
@@ -8,29 +10,45 @@ font_scale = 1.2
 thickness = 2
 
 
-def recreate_img_filled(frame, im_grids, points_grids, list_transform_matrix):
+def recreate_img_filled(frame, im_grids, points_grids, list_transform_matrix,ratio=None):
     # from src.fonctions import resize
 
     target_h, target_w = frame.shape[:2]
-    im_final = frame.copy()
+    if ratio:
+        im_final = frame.copy()
+        for i, points_grid in enumerate(points_grids):
+            points_grids[i] = np.array(points_grid, dtype=np.float32) * ratio
+    else:
+        im_final = frame
+    new_im = np.zeros((frame.shape[0], frame.shape[1], 3), np.uint8)
+    # t0 = time.time()
+
     for im_grid, points_grid, transform_matrix in zip(im_grids, points_grids, list_transform_matrix):
         if im_grid is None:
-            new_im = np.zeros((frame.shape[0], frame.shape[1], 3), np.uint8)
             for point in points_grid:
                 x, y = point
                 cv2.circle(new_im, (x, y), 6, (255, 0, 0), 3)
-            _, mask = cv2.threshold(cv2.cvtColor(new_im, cv2.COLOR_BGR2GRAY), 1, 255, cv2.THRESH_BINARY)
 
         else:
             # grid_h, grid_w = im_grid.shape[:2]
-            # init_pts = np.array([[0, 0], [grid_h - 1, 0], [grid_h - 1, grid_w - 1], [0, grid_w - 1]], dtype=np.float32)
-            # transform_matrix = cv2.getPerspectiveTransform(init_pts, points_grid)
-            new_im = cv2.warpPerspective(im_grid, transform_matrix, (target_w, target_h))
+            if ratio:
+                init_pts = np.array([[0, 0], [target_w_grid - 1, 0], [target_w_grid - 1, target_h_grid - 1],
+                                     [0, target_h_grid - 1]], dtype=np.float32)
+                transform_matrix = cv2.getPerspectiveTransform(init_pts, points_grid)
 
-            _, mask = cv2.threshold(cv2.cvtColor(new_im, cv2.COLOR_BGR2GRAY), 1, 255, cv2.THRESH_BINARY)
+            new_im = cv2.add(new_im, cv2.warpPerspective(im_grid, transform_matrix, (target_w, target_h)))
 
-        im_final = cv2.bitwise_and(im_final, im_final, mask=cv2.bitwise_not(mask))
-        im_final = cv2.add(im_final, new_im)
+    # t1 = time.time()
+    _, mask = cv2.threshold(cv2.cvtColor(new_im, cv2.COLOR_BGR2GRAY), 1, 255, cv2.THRESH_BINARY)
+    # t2 = time.time()
+    im_final = cv2.bitwise_and(im_final, im_final, mask=cv2.bitwise_not(mask))
+    # t3 = time.time()
+    im_final = cv2.add(im_final, new_im)
+    # t4 = time.time()
+    # print(t1 - t0)
+    # print(t2 - t1)
+    # print(t3 - t2)
+    # print(t4 - t3)
 
     return im_final
 

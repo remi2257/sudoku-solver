@@ -359,7 +359,7 @@ def get_lines_and_corners(img, edges, use_hough=False, display=False):
         # t1 = time.time()
 
         for line in lines_raw:
-            # my_lines.append(MyHoughPLines(line, ratio=ratio_resize))
+            # my_lines.append(MyHoughPLines(line, ratio=ratio_resize_hough))
             my_lines.append(MyHoughPLines(line))
         # t2 = time.time()
 
@@ -415,7 +415,7 @@ def get_hough_transform(img, edges, display=False):
     else:
         return grid_limits, img, img_after_merge
 
-
+import time
 def undistorted_grids(frame, points_grids, ratio):
     undistorted = []
     true_points_grids = []
@@ -465,7 +465,7 @@ if __name__ == '__main__':
     # im_path = "images_test/imagedouble.jpg"
     # im_path = "images_test/izi_distord.jpg"
     im = cv2.imread(im_path)
-
+    cv2.imshow("im",im)
     res_grids_final, _, _ = main_grid_detector_img(im, resized=False, display=True,
                                                    using_webcam=False, use_hough=True)
     if res_grids_final is not None:

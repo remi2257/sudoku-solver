@@ -1,7 +1,7 @@
 import os
 import time
 import cv2
-from keras.models import load_model
+from tensorflow.keras.models import load_model
 from tqdm import tqdm
 
 from src.extract_n_solve.extract_digits import process_extract_digits
@@ -25,7 +25,7 @@ def process_1_img(im_path, model):
     im_grids_final, points_grids, list_transform_matrix = main_grid_detector_img(frame, resized=resized)
     if im_grids_final is None:
         return 3
-    grids_matrix = process_extract_digits(im_grids_final, model)
+    grids_matrix = process_extract_digits(im_grids_final, model,save_images_digit=False)
     if all(elem is None for elem in grids_matrix):
         return 4
     grids_solved = main_solve_grids(grids_matrix)
@@ -43,8 +43,9 @@ def process_1_img(im_path, model):
 
 
 if __name__ == '__main__':
-    # dataset_path = "dataset_test/"
-    dataset_path = "images_test/"
+    dataset_path = "dataset_test/"
+    # dataset_path = "images_test/"
+    # my_model = load_model('model/my_super_model.h5')
     my_model = load_model('model/my_model.h5')
     im_list_del = [dataset_path + im_path for im_path in os.listdir(dataset_path)
                    if im_path.endswith("solved.jpg") or im_path.startswith("grid_cut")]

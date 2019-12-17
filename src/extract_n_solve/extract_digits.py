@@ -188,18 +188,18 @@ def fill_numeric_grid(preds, loc_digits, h_im, w_im):
     return grid
 
 
-def process_extract_digits(ims, model, display=False, display_digit=False):
+def process_extract_digits(ims, model, display=False, display_digit=False,save_images_digit=False):
     grids = []
     # display_digit=True
     for img in ims:
-        grids.append(process_extract_digits_single(img,
-                                                   model, display, display_digit))
+        grids.append(process_extract_digits_single(img, model, display, display_digit=display_digit,
+                                                   save_image_digits=save_images_digit))
         # cv2.waitKey(0)
 
     return grids
 
 
-def process_extract_digits_single(img, model, display=False, display_digit=False, save_images=False):
+def process_extract_digits_single(img, model, display=False, display_digit=False, save_image_digits=False):
     # if resize:
     #     img = cv2.resize(img, (450, 450))
     # else:
@@ -234,7 +234,7 @@ def process_extract_digits_single(img, model, display=False, display_digit=False
     if not img_digits:
         if display:
             cv2.imshow("im_contours", im_contours)
-        return None,
+        return None
     img_digits_np = np.array(img_digits) / 255.0
     preds_proba = model.predict(img_digits_np)
 
@@ -256,12 +256,12 @@ def process_extract_digits_single(img, model, display=False, display_digit=False
             y, x = loc_digits[i]
             cv2.imshow('pred_{} - {:.6f} - x/y : {}/{}'.format(preds[i], 100 * max(preds_proba[i]), int(x), int(y)),
                        img_digits[i])
-    if save_images:
+    if save_image_digits:
         for i in range(len(preds)):
             pred = preds[i]
             img_digit = img_digits[i]
             class_name = "N" if pred == -1 else str(pred)
-            target_folder = os.path.join(my_dataset_path, class_name + "/")
+            target_folder = os.path.join(temp_dataset_path, class_name + "/")
             if not os.path.isdir(target_folder):
                 os.mkdir(target_folder)
             name = "{}_{}.jpg".format(class_name,len(os.listdir(target_folder)))
@@ -285,9 +285,9 @@ def process_extract_digits_single(img, model, display=False, display_digit=False
 
 
 if __name__ == '__main__':
-    from keras.models import load_model
+    from tensorflow.keras.models import load_model
 
-    model = load_model('model/my_model.h5')
+    model = load_model('model/my_super_model.h5')
 
     im_path = "images_test/grid_cut_0.jpg"
     # im_path = "images_save/023_failed.jpg"

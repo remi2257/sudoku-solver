@@ -13,7 +13,7 @@ from src.useful_functions import my_resize
 save_folder = "images_save/"
 
 
-def main_process_img(im_path, model, save=False, display=False, use_hough=True):
+def main_process_img(im_path, model, save=False, display=False, use_hough=True, save_images_digit=False):
     init = time.time()
     frame = cv2.imread(im_path)  # TODO Check if image not well oriented - EXIF data
     init0 = time.time()
@@ -29,7 +29,8 @@ def main_process_img(im_path, model, save=False, display=False, use_hough=True):
         logger.error("No grid found")
         sys.exit(3)
     logger.info("Grid(s) found")
-    grids_matrix = process_extract_digits(im_grids_final, model, display=display, display_digit=False)
+    grids_matrix = process_extract_digits(im_grids_final, model, display=display, display_digit=False,
+                                          save_images_digit=save_images_digit)
     if all(elem is None for elem in grids_matrix):
         logger.error("Failed during digits extraction")
         sys.exit(3)
@@ -101,5 +102,5 @@ if __name__ == '__main__':
         "images_test/video_stop.png",  # 8
         "tmp/035.jpg",  # 9
     ]
-    im_path = im_paths[4]
+    im_path = im_paths[0]
     main_process_img(im_path, model, save=False, display=True)

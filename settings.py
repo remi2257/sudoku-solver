@@ -14,6 +14,7 @@ CAMERA_PORT = 1
 
 # PATHS
 my_dataset_path = "/media/hdd_linux/DataSet/Mine/"
+temp_dataset_path = "/media/hdd_linux/DataSet/Mine/temp"
 
 # ----TEXT DISPLAY----#
 RED = (0, 0, 255)
@@ -30,11 +31,14 @@ thickness_normal = 3
 thickness_small = 2
 # ----RESIZE----#
 param_resize_height = 900
-param_resize_width = 900
-resize_height_hough = 640
+param_resize_width = 1600
+resize_height_hough = 360
 resize_width_hough = 640
 
-ratio_resize = float(param_resize_height) / resize_height_hough
+output_width = 853
+output_height = 480
+
+ratio_resize_hough = float(param_resize_height) / resize_height_hough
 
 # ----PREPRO BIG IMAGE----#
 block_size_big = 41
@@ -83,8 +87,8 @@ mean_sub_webcam_grid = 5
 display_prepro_grid = False
 
 # ----DIGITS EXTRACTION----#
-thresh_conf_cnn = 0.995
-thresh_conf_cnn_high = 0.9999
+thresh_conf_cnn = 0.98
+thresh_conf_cnn_high = 0.99
 digits_2_check = 12
 
 lim_bord = 10

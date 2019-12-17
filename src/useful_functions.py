@@ -118,7 +118,7 @@ def add_annotation_to_image(img, text, write_on_top=True):
     :param write_on_top: if you write the text on top
     :return: img with text written on it
     """
-    font_scale_used = font_scale_normal
+    font_scale_used = font_scale_small
     thickness_used = thickness_small
     h_im, w_im = img.shape[:2]
     (text_width, text_height), baseline = cv2.getTextSize(text, font, fontScale=font_scale_used,

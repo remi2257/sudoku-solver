@@ -14,7 +14,7 @@ img_size = 28 * 28
 def create_csv(data_path):
     folders_list = [data_path + path for path in os.listdir(data_path) if os.path.isdir(data_path + path)]
 
-    folders_list = [folder for folder in folders_list if not folder.endswith(tuple(["train", "test"]))]
+    folders_list = [folder for folder in folders_list if not folder.endswith(tuple(["train", "test","temp"]))]
     folders_list = sorted(folders_list, key=lambda x: os.path.basename(x))
     # df = pd.DataFrame({"label": [],
     #                    "images_test": []})

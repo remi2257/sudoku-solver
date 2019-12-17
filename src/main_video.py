@@ -1,4 +1,4 @@
-from keras.models import load_model
+from tensorflow.keras.models import load_model
 
 from src.extract_n_solve.extract_digits import process_extract_digits_single
 from src.extract_n_solve.grid_detector_img import main_grid_detector_img
@@ -34,23 +34,24 @@ def look_for_already_solved_grid(im_grids_final, list_possible_grid, points_grid
 thresh_apparition_conf = 1
 
 
-def extract_digits_and_solve(im_grids_final, model, already_solved_list, list_possible_grid, points_grids):
+def extract_digits_and_solve(im_grids_final, model, old_solution_list, list_possible_grid, points_grids):
     # print(len(list_possible_grid))
     grids_matrix = []
-    for im_grid_final, already_solved in zip(im_grids_final, already_solved_list):
-        if already_solved == -1:
-            grids_matrix.append(process_extract_digits_single(im_grid_final, model))
+    for im_grid_final, old_solution in zip(im_grids_final, old_solution_list):
+        if old_solution == -1:
+            grids_matrix.append(process_extract_digits_single(im_grid_final, model,
+                                                              save_image_digits=False))
         else:
-            grids_matrix.append(already_solved.grid)
+            grids_matrix.append(old_solution.grid)
     if all(elem is None for elem in grids_matrix):
         return None, None
     grids_solved = []
-    for grid_matrix, already_solved, points_grid in zip(grids_matrix, already_solved_list, points_grids):
+    for grid_matrix, old_solution, points_grid in zip(grids_matrix, old_solution_list, points_grids):
         if grid_matrix is None:
             grids_solved.append(None)
             continue
-        if already_solved != -1:
-            grids_solved.append(already_solved.grid_solved)
+        if old_solution != -1:
+            grids_solved.append(old_solution.grid_solved)
         else:
             has_been_found = False
             for sudoku in list_possible_grid:
@@ -71,9 +72,9 @@ def extract_digits_and_solve(im_grids_final, model, already_solved_list, list_po
                         grids_solved.append(sudoku.grid_solved)
                     break
             if not has_been_found:
-                # list_possible_grid.append(SudokuVideo(grid_matrix))
-                # grids_solved.append(None)
-                pass
+                list_possible_grid.append(SudokuVideo(grid_matrix))
+                grids_solved.append(None)
+                # pass
     return grids_matrix, grids_solved
 
 
@@ -141,12 +142,13 @@ def main_grid_detector_video(model, video_path=None, save=0, display=True):
         if not os.path.isdir(save_folder):
             os.makedirs(save_folder)
         output_video = cv2.VideoWriter(video_out_path, cv2.VideoWriter_fourcc(*'mp4v'), 30.0,
-                                       (w_vid_target, h_vid_target))
+                                       # (w_vid_target, h_vid_target))
+                                       (output_width, output_height))
         # (1920, 1080))
 
     while "User do not stop":
         # -- Init the iteration
-        if cv2.waitKey(1) in keys_leave:  # ord('q')
+        if cv2.waitKey(1) in keys_leave:
             break
 
         init_time = time.time()
@@ -158,7 +160,9 @@ def main_grid_detector_video(model, video_path=None, save=0, display=True):
             if not ret:
                 break
 
-        # Update Suodku Lists (for keeping already deteeted grids & deleting old ones)
+        img_final = my_resize(img, height=output_height)
+        ratio = float(img_final.shape[0]) / img.shape[0]
+        # Update Suodku Lists (for keeping already detected grids & deleting old ones)
         update_sudoku_lists(list_possible_grid, using_webcam=using_webcam)
 
         read_time = time.time()
@@ -172,16 +176,16 @@ def main_grid_detector_video(model, video_path=None, save=0, display=True):
         grid_detection_time = time.time()
         logger.info("grid_detect_time \t{:05.2f}ms".format(1000 * (grid_detection_time - read_time)))
 
-        if im_grids_final is None: # No grid has been found
+        if im_grids_final is None:  # No grid has been found
             frames_without_grid += 1
             if frames_without_grid < lim_frames_without_grid and grids_solved is not None:
-                im_final = recreate_img_filled(img, ims_filled_grid,
-                                               points_grids_saved, list_matrix_saved)
-                show_im_final(im_final, init_time)
-            else:
-                show_im_final(img, init_time)
+                img_final = recreate_img_filled(img_final, ims_filled_grid,
+                                                points_grids_saved, list_matrix_saved,
+                                                ratio=ratio)
+            show_im_final(img_final, init_time)
+
             if save == 1:
-                output_video.write(my_resize(img, w_vid_target))
+                output_video.write(img_final)
             if save == 3:
                 cv2.imwrite("tmp/{:03d}.jpg".format(ind_save), img)
                 ind_save += 1
@@ -194,16 +198,17 @@ def main_grid_detector_video(model, video_path=None, save=0, display=True):
         list_matrix_saved = list_transform_matrix.copy()
 
         # Checking if grids has been already solved with position
-        already_solved = look_for_already_solved_grid(im_grids_final, list_possible_grid, points_grids)
-
-        grids_matrix, grids_solved = extract_digits_and_solve(im_grids_final, model, already_solved, list_possible_grid,
+        old_solution_list = look_for_already_solved_grid(im_grids_final, list_possible_grid, points_grids)
+        # Extracting & solving
+        grids_matrix, grids_solved = extract_digits_and_solve(im_grids_final, model, old_solution_list,
+                                                              list_possible_grid,
                                                               points_grids)
         solving_time = time.time()
         logger.info("solving_time \t\t{:05.2f}ms".format(1000 * (solving_time - grid_detection_time)))
         if grids_solved is None:
-            show_im_final(img, init_time)
+            show_im_final(img_final, init_time)
             if save == 1:
-                output_video.write(my_resize(img, w_vid_target))
+                output_video.write(img_final)
             if save == 3:
                 cv2.imwrite("tmp/{:03d}.jpg".format(ind_save), img)
                 ind_save += 1
@@ -213,16 +218,18 @@ def main_grid_detector_video(model, video_path=None, save=0, display=True):
         write_time = time.time()
         logger.info("write_time \t\t{:05.2f}ms".format(1000 * (write_time - solving_time)))
 
-        im_final = recreate_img_filled(img, ims_filled_grid, points_grids, list_transform_matrix)
+        img_final = recreate_img_filled(img_final, ims_filled_grid,
+                                        points_grids, list_transform_matrix, ratio=ratio)
         recreation_time = time.time()
         logger.info("recreation_time \t{:05.2f}ms".format(1000 * (recreation_time - write_time)))
 
-        show_im_final(im_final, init_time)
+        show_im_final(img_final, init_time)
         show_time = time.time()
         logger.info("show_time \t\t{:05.2f}ms".format(1000 * (show_time - recreation_time)))
 
         if save > 0:
-            output_video.write(my_resize(im_final, w_vid_target))
+            # output_video.write(my_resize(img_final, w_vid_target))
+            output_video.write(img_final)
             # if save == 3:
             #     cv2.imwrite("tmp/{:03d}.jpg".format(ind_save), frame)
             #     ind_save += 1
@@ -240,7 +247,8 @@ def main_grid_detector_video(model, video_path=None, save=0, display=True):
 
 
 if __name__ == '__main__':
-    my_model = load_model('model/my_model.h5')
-    # video_p = "/media/hdd_linux/Video/sudoku1.mp4"
-    # main_grid_detector_video(my_model, video_path=video_p, save=1, display=True)
-    main_grid_detector_video(my_model)
+    my_model = load_model('model/my_super_model.h5')
+    video_p = "/media/hdd_linux/Video/sudoku1.mp4"
+    main_grid_detector_video(my_model, video_path=video_p,
+                             save=1, display=True)
+    # main_grid_detector_video(my_model)

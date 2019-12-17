@@ -1,11 +1,11 @@
 # sudoku-solver
-Hi, my name is Remi LUX. I'm currently in my final year of Computer Vision Degree
-in Grenoble INP - Phelma.
+Hi, my name is Remi LUX. I'm currently end my final year of Computer Vision Degree
+in Grenoble INP - Phelma, and I'm now engineer at Niryo.
 Welcome to my project  
 My algorithm is able to detect and to directly solve sudokus in VR
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/39727257/57652501-0213a500-75d0-11e9-9f14-2a3bada71923.gif" width="500"/>
+<img src="https://user-images.githubusercontent.com/39727257/71027269-31146b00-210b-11ea-860e-47b591686cee.gif" width="500"/>
 </p>
 
 
@@ -88,7 +88,7 @@ For that use the parameter `-mp path/to/your/model`
 ## Evolution, TODO list, Q&A, ...
 ### Evolution of the Algorithm
 
-| Version | Original Picture      |  Algorithm Output |
+| Version | Source      |  Algorithm Output |
 :-------------------------:|:-------------------------:|:-------------------------:
 1.5 | Video | <img src="https://user-images.githubusercontent.com/39727257/57652501-0213a500-75d0-11e9-9f14-2a3bada71923.gif" width="400"/>
 1.3 | <img src="https://user-images.githubusercontent.com/39727257/57191967-b146e100-6f2b-11e9-993d-3f6e8dc8e246.jpg" width="400"/> | <img src="https://user-images.githubusercontent.com/39727257/57191964-aa1fd300-6f2b-11e9-8a3e-9403b851b2dd.jpg" width="400"/>
@@ -109,11 +109,14 @@ with data augmentation. It gave me a precision of 99.5+ %
 - [X] Better (v1.5)
 - [X] Stronger (v1.6)
 - [X] Faster (v1.7)
-- [ ] Improve Training
+- [X] Improve Training(v1.7)
 - [ ] ~~Multi-threading Processing~~
 
 ### VERSION LIST
 
+- v1.7 : Multiple performance improvement | 17/12/19
+    - New training method
+    - Improve Reconstruction
 - v1.6 : Multiple performance improvement | 19/05/19
     - Optimize method for solving
     - Optimize method for grid detection

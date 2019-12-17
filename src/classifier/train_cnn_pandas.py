@@ -1,19 +1,22 @@
 import itertools
 import os
 
+import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from keras.utils.np_utils import to_categorical  # convert to one-hot-encoding
+from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import train_test_split
 from tensorflow.keras.callbacks import ReduceLROnPlateau
 from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPool2D
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import RMSprop
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from keras.utils.np_utils import to_categorical  # convert to one-hot-encoding
-from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import train_test_split
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+from src.classifier.classification_preparation import read_file_classes
 
 # import matplotlib.image as mpimg
 # import seaborn as sns
@@ -29,8 +32,8 @@ if handwritten:
     epochs = 4
     batch_size = 86
 else:
-    epochs = 8 #20
-    batch_size = 16 #32  # 86
+    epochs = 10  # 20
+    batch_size = 32  # 86
 
 datagen = ImageDataGenerator(
     featurewise_center=False,  # set input mean to 0 over the classifier
@@ -38,10 +41,10 @@ datagen = ImageDataGenerator(
     featurewise_std_normalization=False,  # divide inputs by std of the classifier
     samplewise_std_normalization=False,  # divide each input by its std
     zca_whitening=False,  # apply ZCA whitening
-    rotation_range=5,  # randomly rotate images_test in the range (degrees, 0 to 180)
-    zoom_range=[1, 1.1],  # Randomly zoom image
-    width_shift_range=0.05,  # randomly shift images_test horizontally (fraction of total width)
-    height_shift_range=0.05,  # randomly shift images_test vertically (fraction of total height)
+    rotation_range=20,  # randomly rotate images_test in the range (degrees, 0 to 180)
+    zoom_range=[0.9, 1.2],  # Randomly zoom image
+    width_shift_range=0.2,  # randomly shift images_test horizontally (fraction of total width)
+    height_shift_range=0.07,  # randomly shift images_test vertically (fraction of total height)
     horizontal_flip=False,  # randomly flip images_test
     vertical_flip=False)  # randomly flip images_test
 
@@ -173,11 +176,10 @@ def load_data(data_path, handwritten=False):
 
 
 def main():
-    continue_train = True
     train = True
+    already_trained = True
     data_augmentation = True
-    separate = False
-    already_split = False
+    history = None
     if handwritten:
         dataset_path = "/media/hdd_linux/DataSet/mnist_handwritten/"
 
@@ -185,24 +187,21 @@ def main():
         # dataset_path = "/media/hdd_linux/DataSet/mnist_numeric/"
         dataset_path = "/media/hdd_linux/DataSet/Mine/"
 
-    if already_split:
-        x_train, y_train, x_test, y_test = load_data_split(dataset_path, handwritten)
+    X, Y = load_data(dataset_path, handwritten)
+    x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0.15)  # , random_state=2
+
+    if not already_trained:
+        models_path = 'model/'
+        model = CNN_model()
+
     else:
-        X, Y = load_data(dataset_path, handwritten)
-        x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0.2)  # , random_state=2
+        from tensorflow.keras.models import load_model
+        models_path = 'model/'
+        model_name = "{}my_super_model.h5".format(models_path, len(os.listdir(models_path)))
+        model = load_model(model_name)
+        print("Model Loaded")
 
-    if continue_train or train:
-
-        if continue_train:
-            from tensorflow.keras.models import load_model
-            models_path = 'model/'
-            model_name = "{}my_super_model.h5".format(models_path, len(os.listdir(models_path)))
-            model = load_model(model_name)
-
-        else:
-            models_path = 'model/'
-            model = CNN_model()
-
+    if train:
         if not data_augmentation:
             history = model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, verbose=1,
                                 validation_data=(x_test, y_test))  # validation_data=(X_val, Y_val)
@@ -217,7 +216,9 @@ def main():
 
         new_model_name = "{}model_{}.h5".format(models_path, len(os.listdir(models_path)))
         model.save(new_model_name)
+    classes = read_file_classes(dataset_path + "data.names")
 
+    if train:
         # Predict the values from the validation classifier
         Y_pred = model.predict(x_test)
         # Convert predictions classes to one hot vectors
@@ -226,10 +227,26 @@ def main():
         Y_true = np.argmax(y_test, axis=1)
         # compute the confusion matrix
         confusion_mtx = confusion_matrix(Y_true, Y_pred_classes)
-        # plot the confusion matrix
-        plot_confusion_matrix(confusion_mtx, classes=range(int(not include_zero), 10))
+    else:
+        # Predict the values from the validation classifier
+        Y_pred = model.predict(X)
+        # Convert predictions classes to one hot vectors
+        Y_pred_classes = np.argmax(Y_pred, axis=1)
+        # Convert validation observations to one hot vectors
+        Y_true = np.argmax(Y, axis=1)
+        # compute the confusion matrix
+        confusion_mtx = confusion_matrix(Y_true, Y_pred_classes)
+        count_wrong = 0
+        for img, y_true, y_pred in zip(X, Y_true, Y_pred_classes):
+            if y_true == y_pred:
+                continue
+            count_wrong += 1
+            cv2.imshow("{} - Pred {} - True {}".format(count_wrong, classes[y_pred], classes[y_true]), img)
+    # plot the confusion matrix
+    plot_confusion_matrix(confusion_mtx, classes=classes)
+    if train:
         plot_history(history)
-        plt.show()
+    plt.show()
 
     # else:
     #     from keras.models import load_model
