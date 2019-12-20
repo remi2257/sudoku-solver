@@ -5,7 +5,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from keras.utils.np_utils import to_categorical  # convert to one-hot-encoding
+from tensorflow.keras.utils import to_categorical  # convert to one-hot-encoding
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.callbacks import ReduceLROnPlateau

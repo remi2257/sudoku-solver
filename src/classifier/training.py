@@ -4,11 +4,11 @@ import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
-from keras.callbacks import ReduceLROnPlateau
-from keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPool2D
-from keras.models import Sequential
-from keras.optimizers import RMSprop
-from keras.utils.np_utils import to_categorical  # convert to one-hot-encoding
+from tensorflow.keras.callbacks import ReduceLROnPlateau
+from tensorflow.keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPool2D
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import RMSprop
+from tensorflow.keras.utils import to_categorical  # convert to one-hot-encoding
 from sklearn.metrics import confusion_matrix
 
 from src.classifier.classification_preparation import read_file_classes

@@ -3,6 +3,7 @@ import os
 import sys
 
 from settings import logger
+from tensorflow.keras.models import load_model
 
 images_extension = [".jpg", ".jpeg", ".png", ".bmp", ".ash"]
 video_extension = [".mp4", ".avi"]
@@ -80,7 +81,6 @@ def setting_recup():  # Function to read parameter settings
         args.profile = 2
 
     try:
-        from keras.models import load_model
         model = load_model(args.model_path)
     except OSError:
         logger.critical("\nCannot localize model\nLeaving...")
