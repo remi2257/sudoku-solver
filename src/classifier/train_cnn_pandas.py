@@ -197,7 +197,7 @@ def main():
     else:
         from tensorflow.keras.models import load_model
         models_path = 'model/'
-        model_name = "{}my_super_model.h5".format(models_path, len(os.listdir(models_path)))
+        model_name = "{}my_model.h5".format(models_path, len(os.listdir(models_path)))
         model = load_model(model_name)
         print("Model Loaded")
 

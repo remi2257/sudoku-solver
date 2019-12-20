@@ -35,8 +35,8 @@ param_resize_width = 1600
 resize_height_hough = 360
 resize_width_hough = 640
 
-output_width = 853
-output_height = 480
+output_width = 1365 #853
+output_height = 768 # 480
 
 ratio_resize_hough = float(param_resize_height) / resize_height_hough
 

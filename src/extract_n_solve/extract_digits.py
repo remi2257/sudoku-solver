@@ -287,7 +287,7 @@ def process_extract_digits_single(img, model, display=False, display_digit=False
 if __name__ == '__main__':
     from tensorflow.keras.models import load_model
 
-    model = load_model('model/my_super_model.h5')
+    model = load_model('model/my_model.h5')
 
     im_path = "images_test/grid_cut_0.jpg"
     # im_path = "images_save/023_failed.jpg"

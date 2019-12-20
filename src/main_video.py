@@ -247,7 +247,7 @@ def main_grid_detector_video(model, video_path=None, save=0, display=True):
 
 
 if __name__ == '__main__':
-    my_model = load_model('model/my_super_model.h5')
+    my_model = load_model('model/my_model.h5')
     video_p = "/media/hdd_linux/Video/sudoku1.mp4"
     main_grid_detector_video(my_model, video_path=video_p,
                              save=1, display=True)

@@ -45,7 +45,6 @@ def process_1_img(im_path, model):
 if __name__ == '__main__':
     dataset_path = "dataset_test/"
     # dataset_path = "images_test/"
-    # my_model = load_model('model/my_super_model.h5')
     my_model = load_model('model/my_model.h5')
     im_list_del = [dataset_path + im_path for im_path in os.listdir(dataset_path)
                    if im_path.endswith("solved.jpg") or im_path.startswith("grid_cut")]

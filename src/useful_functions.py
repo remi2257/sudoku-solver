@@ -142,7 +142,7 @@ def add_annotation_to_image(img, text, write_on_top=True):
     return img
 
 
-def create_gif(video_path, o_folder, fps=5, width=320):
+def create_gif(video_path, o_folder, fps=5, width=360):
     gif_file_name = o_folder + "video_solve_0.gif"
     ind_save = 0
     while os.path.isfile(gif_file_name):
@@ -166,9 +166,9 @@ def create_gif(video_path, o_folder, fps=5, width=320):
 
 
 if __name__ == '__main__':
-    # video_path_ = "/home/remi/PycharmProjects/sudoku-solver/videos_result/out_process_0.mp4"
-    # o_folder_ = "/home/remi/PycharmProjects/sudoku-solver/videos_result/"
-    # create_gif(video_path_, o_folder_, width=480)
-    im = cv2.imread("images_test/sudoku2.jpg")
-    my_resize(im, height=900)
-    my_resize(im, height=900, inter=cv2.INTER_AREA)
+    video_path_ = "/home/remi/PycharmProjects/sudoku-solver/videos_result/out_process_1.mp4"
+    o_folder_ = "/home/remi/PycharmProjects/sudoku-solver/videos_result/"
+    create_gif(video_path_, o_folder_, width=480)
+    # im = cv2.imread("images_test/sudoku2.jpg")
+    # my_resize(im, height=900)
+    # my_resize(im, height=900, inter=cv2.INTER_AREA)
