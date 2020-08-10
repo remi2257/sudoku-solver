@@ -1,0 +1,39 @@
+WindowManager:
+    id: screen_manager
+
+    SudokuCameraWindow:
+        id: main
+        name: 'main'
+    SolverWindow:
+        id: solver
+        name: 'solver'
+
+<SudokuCameraWindow>:
+    name: "main"
+
+    camera: camera
+
+    FloatLayout:
+        id: float_layout
+        KivyCamera:
+            id: camera
+            size_hint_y: 0.9
+            pos_hint: {"top":1}
+        Button:
+            id: button
+            text: 'Solve'
+            size_hint_y: 0.1
+            on_release: root.solve()
+
+<SolverWindow>:
+    name: "solver"
+    image: image
+
+    Image:
+        id: image
+        size_hint_y: 0.9
+        pos_hint: {"top":1}
+    Button:
+        text: "Go back to camera"
+        size_hint_y: 0.1
+        on_release: root.get_back_to_camera()
