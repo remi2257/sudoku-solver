@@ -1,3 +1,19 @@
+<MonBouton>
+    BoxLayout:
+        orientation: 'horizontal'
+        ToggleButton:
+            id: btn1
+            text: "Full Solve"
+            group: "solve"
+            state: "down"
+            pos_hint: {"left":1}
+
+        ToggleButton:
+            id: btn2
+            text: "Hint"
+            group: "solve"
+            pos_hint: {"right":1}
+
 WindowManager:
     id: screen_manager
 
@@ -99,16 +115,20 @@ WindowManager:
         id: float_layout
         MyKivyCamera:
             id: camera
-            size_hint_y: 0.9
+            size_hint_y: 0.8
             pos_hint: {"top":1}
         Button:
-            id: button
+            id: button_back
             text: "Back"
             size_hint_y: 0.1
             on_release:
                 root.stop_stream()
                 app.root.transition.direction = "left"
                 app.root.current = "main"
+        MonBouton:
+            size_hint_y: 0.1
+            pos_hint: {"y":0.2}
+            id: toggle_button
 
 
 <GallerySolverScreen>:

@@ -9,6 +9,9 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.image import Image
 from kivy.graphics.texture import Texture
 
+from kivy.uix.widget import Widget
+# from kivy.uix.togglebutton import ToggleButton
+
 import cv2
 from tensorflow.keras.models import load_model
 
@@ -86,7 +89,13 @@ class MyKivyCamera(Image):
             return self.capture.read()
 
 
+class MonBouton(Widget):
+    btn1 = ObjectProperty(None)
+    btn2 = ObjectProperty(None)
+
+
 class SolverScreen(Screen):
+
     def __init__(self, **kwargs):
         super(SolverScreen, self).__init__(**kwargs)
 
@@ -128,6 +137,10 @@ class LiveSolverScreen(SolverScreen):
 
 
 class GallerySolverScreen(SolverScreen):
+    """
+    Voir FileChooser
+    https://kivy.org/doc/stable/api-kivy.uix.filechooser.html
+    """
     kivy_image = ObjectProperty(None)
     original_image = None
 
