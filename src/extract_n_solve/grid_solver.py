@@ -100,10 +100,11 @@ if __name__ == '__main__':
     target_grid = grid1
     init = time.time()
     f_sudo = main_solve_grid(target_grid)
-    print("Took {:.5f} s".format(time.time() - init))
     print(Sudoku(grid=target_grid))
     if f_sudo is None:
         print("echec")
     else:
         print(f_sudo)
         print("Validated ?", Sudoku(grid=f_sudo).verify_result())
+
+    print("Took {:.1f} ms".format(1000 * (time.time() - init)))

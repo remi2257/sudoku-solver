@@ -19,65 +19,140 @@ kivy.require('1.9.0')
 model_default_name = 'model/my_model.h5'
 
 
-class KivyCamera(Image):
+# noinspection PyArgumentList
+def convert_opencv_to_texture(frame):
+    if frame is None:
+        return Texture()
+    buf1 = cv2.flip(frame, 0)
+    buf = buf1.tostring()
+    image_texture = Texture.create(
+        size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
+    image_texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
+
+    return image_texture
+
+
+def convert_texture_to_opencv(texture):
+    pixels = texture.pixels
+    img_opencv = cv2.flip(pixels, 0)
+
+    return img_opencv
+
+
+class MyKivyCamera(Image):
 
     def __init__(self, fps=30, **kwargs):
         super().__init__(**kwargs)
-        self.capture = cv2.VideoCapture(-1)
-        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-        Clock.schedule_interval(self.update, 1.0 / fps)
+
+        self.android = kivy.platform == 'android'
+        self.__freeze = False
         self.last_image_read = None
 
+        self.capture = None
+        Clock.schedule_interval(self.update, 1.0 / fps)
+
     def update(self, _dt):
-        ret, frame = self.capture.read()
+        ret, frame = self.read_img()
         if ret:
             self.last_image_read = frame
 
-            # display image from the texture
-            self.texture = self.convert_to_texture(frame)
+            if not self.__freeze:
+                # display image from the texture
+                self.texture = convert_opencv_to_texture(frame)
 
-    def on_stop(self):
-        # without this, app will not exit even if the window is closed
-        self.capture.release()
+    def start_capture(self):
+        if self.android:
+            self.capture = None
+        else:
+            self.capture = cv2.VideoCapture(-1)
+            self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+            self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
-    # noinspection PyArgumentList
-    @classmethod
-    def convert_to_texture(cls, frame):
-        buf1 = cv2.flip(frame, 0)
-        buf = buf1.tostring()
-        image_texture = Texture.create(
-            size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
-        image_texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
+    def stop_capture(self):
+        if self.android:
+            pass
+        else:
+            self.capture.release()
+        self.capture = None
 
-        return image_texture
+    def read_img(self):
+        if self.capture is None:
+            return False, None
+
+        if self.android:
+            return False, None
+
+        else:
+            return self.capture.read()
 
 
-class SudokuCameraWindow(Screen):
-    camera = ObjectProperty(None)
-
+class SolverScreen(Screen):
     def __init__(self, **kwargs):
-        super(SudokuCameraWindow, self).__init__(**kwargs)
+        super(SolverScreen, self).__init__(**kwargs)
 
         self.model = load_model(model_default_name)
 
+    @property
+    def target_image(self):
+        raise NotImplementedError
+
     def solve(self):
-        frame = self.camera.last_image_read
-        worked_frame = process_single_img(frame, self.model)
-        self.apply_texture_from_frame(worked_frame)
+        frame = self.target_image
+        solved_frame = process_single_img(frame, self.model)
+        self.display_solved(solved_frame)
 
-    def apply_texture_from_frame(self, frame):
-        self.manager.ids.solver.image.texture = KivyCamera.convert_to_texture(frame)
-        self.manager.transition.direction = "left"
-        self.manager.current = "solver"
+    def display_solved(self, opencv_frame):
+        raise NotImplementedError
 
 
-class SolverWindow(Screen):
-    image = ObjectProperty(None)
+class LiveSolverScreen(SolverScreen):
+    camera = ObjectProperty(None)
 
-    def get_back_to_camera(self):
-        self.manager.transition.direction = "right"
-        self.manager.current = "main"
+    def __init__(self, **kwargs):
+        super(LiveSolverScreen, self).__init__(**kwargs)
+
+        self.model = load_model(model_default_name)
+
+    @property
+    def target_image(self):
+        return self.camera.last_image_read
+
+    def display_solved(self, opencv_frame):
+        self.camera.texture = convert_opencv_to_texture(opencv_frame)
+
+    def start_stream(self):
+        self.camera.start_capture()
+
+    def stop_stream(self):
+        self.camera.stop_capture()
+
+
+class GallerySolverScreen(SolverScreen):
+    kivy_image = ObjectProperty(None)
+    original_image = None
+
+    @property
+    def target_image(self):
+        return self.original_image
+
+    def display_solved(self, opencv_frame):
+        self.camera.texture = convert_opencv_to_texture(opencv_frame)
+
+
+class ManualSolverScreen(Screen):
+    pass
+
+
+class HelpScreen(Screen):
+    pass
+
+
+class AboutScreen(Screen):
+    pass
+
+
+class MainScreen(Screen):
+    pass
 
 
 class WindowManager(ScreenManager):
@@ -94,3 +169,15 @@ class SudokuSolverApp(App):
 
 if __name__ == "__main__":
     SudokuSolverApp().run()
+
+"""
+Useful stuff
+
+def display_solved(self, frame):
+    self.manager.ids.solver.image.texture = MyCamera.convert_to_texture(frame)
+    self.manager.transition.direction = "left"
+    self.manager.current = "solver"
+
+
+
+"""

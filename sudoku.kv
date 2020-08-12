@@ -1,39 +1,161 @@
 WindowManager:
     id: screen_manager
 
-    SudokuCameraWindow:
+    MainScreen:
         id: main
-        name: 'main'
-    SolverWindow:
-        id: solver
-        name: 'solver'
+        name: "main"
 
-<SudokuCameraWindow>:
+    HelpScreen:
+        id: help
+        name: "help"
+
+    LiveSolverScreen:
+        id: live_solver
+        name: "live_solver"
+    GallerySolverScreen:
+        id: gallery_solver
+        name: "gallery_solver"
+    ManualSolverScreen:
+        id: manual_solver
+        name: "manual_solver"
+
+    AboutScreen:
+        id: about
+        name: "about"
+
+
+<MainScreen>:
     name: "main"
+
+    FloatLayout:
+
+        Button:
+            id: button_help
+            text: "Help"
+            pos_hint: {"top":0.95}
+            size_hint_y: 0.1
+            on_release:
+                app.root.transition.direction = "down"
+                app.root.current = "help"
+
+        Button:
+            id: button_live_solver
+            text: "Live Solver"
+            pos_hint: {"top":0.8}
+            size_hint_y: 0.1
+            on_release:
+                app.root.transition.direction = "right"
+                app.root.current = "live_solver"
+                app.root.ids.live_solver.start_stream()
+
+        Button:
+            id: button_gallery_solver
+            text: "Gallery Solver"
+            pos_hint: {"top":0.65}
+            size_hint_y: 0.1
+            on_release:
+                app.root.transition.direction = "left"
+                app.root.current = "gallery_solver"
+
+        Button:
+            id: button_manual_solver
+            text: "Manual Solver"
+            pos_hint: {"top":0.5}
+            size_hint_y: 0.1
+            on_release:
+                app.root.transition.direction = "left"
+                app.root.current = "manual_solver"
+
+        Button:
+            id: button_about
+            text: "About"
+            pos_hint: {"top":0.3}
+            size_hint_y: 0.1
+            on_release:
+                app.root.transition.direction = "up"
+                app.root.current = "about"
+
+
+<HelpScreen>:
+    name: "help"
+
+    FloatLayout:
+        id: float_layout
+        Button:
+            id: button
+            text: "Back"
+            size_hint_y: 0.1
+            on_release:
+                app.root.transition.direction = "up"
+                app.root.current = "main"
+                
+
+<LiveSolverScreen>:
+    name: "live_solver"
 
     camera: camera
 
     FloatLayout:
         id: float_layout
-        KivyCamera:
+        MyKivyCamera:
             id: camera
             size_hint_y: 0.9
             pos_hint: {"top":1}
         Button:
             id: button
-            text: 'Solve'
+            text: "Back"
             size_hint_y: 0.1
-            on_release: root.solve()
+            on_release:
+                root.stop_stream()
+                app.root.transition.direction = "left"
+                app.root.current = "main"
 
-<SolverWindow>:
-    name: "solver"
+
+<GallerySolverScreen>:
+    name: "gallery_solver"
+
+    kivy_image: image
+
+    FloatLayout:
+        Image:
+            id: image
+            size_hint_y: 0.9
+            pos_hint: {"top":1}
+        Button:
+            id: button
+            text: "Back"
+            size_hint_y: 0.1
+            on_release:
+                app.root.transition.direction = "right"
+                app.root.current = "main"
+
+<ManualSolverScreen>:
+    name: "gallery_solver"
+
     image: image
 
-    Image:
-        id: image
-        size_hint_y: 0.9
-        pos_hint: {"top":1}
-    Button:
-        text: "Go back to camera"
-        size_hint_y: 0.1
-        on_release: root.get_back_to_camera()
+    FloatLayout:
+        Image:
+            id: image
+            size_hint_y: 0.9
+            pos_hint: {"top":1}
+        Button:
+            id: button
+            text: "Back"
+            size_hint_y: 0.1
+            on_release:
+                app.root.transition.direction = "right"
+                app.root.current = "main"
+
+<AboutScreen>:
+    name: "about"
+
+    FloatLayout:
+        Button:
+            id: button
+            text: "Back"
+            size_hint_y: 0.1
+            on_release:
+                app.root.transition.direction = "down"
+                app.root.current = "main"
+
