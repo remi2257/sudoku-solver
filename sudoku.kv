@@ -1,5 +1,5 @@
 <MonBouton>
-    BoxLayout:
+    FloatLayout:
         orientation: 'horizontal'
         ToggleButton:
             id: btn1
@@ -7,12 +7,13 @@
             group: "solve"
             state: "down"
             pos_hint: {"left":1}
-
+            size_hint_x : 0.5
         ToggleButton:
             id: btn2
             text: "Hint"
             group: "solve"
             pos_hint: {"right":1}
+            size_hint_x : 0.5
 
 WindowManager:
     id: screen_manager
@@ -110,6 +111,9 @@ WindowManager:
     name: "live_solver"
 
     camera: camera
+    btn_solve_unfreeze: button
+    btn_full_solve: btn1
+    btn_hint: btn2
 
     FloatLayout:
         id: float_layout
@@ -117,6 +121,28 @@ WindowManager:
             id: camera
             size_hint_y: 0.8
             pos_hint: {"top":1}
+
+        ToggleButton:
+            id: btn1
+            text: "Full Solve"
+            group: "solve"
+            state: "down"
+            pos_hint: {"x":0.2, "y":0.1}
+            size_hint : (0.1, 0.1)
+        ToggleButton:
+            id: btn2
+            text: "Hint"
+            group: "solve"
+            pos_hint: {"x":0.3, "y":0.1}
+            size_hint : (0.1, 0.1)
+
+        Button:
+            id: button
+            text: 'Solve'
+            pos_hint: {"x":0.6, "y":0.1}
+            size_hint : (0.2, 0.1)
+            on_release: root.act_button()
+
         Button:
             id: button_back
             text: "Back"
@@ -125,10 +151,6 @@ WindowManager:
                 root.stop_stream()
                 app.root.transition.direction = "left"
                 app.root.current = "main"
-        MonBouton:
-            size_hint_y: 0.1
-            pos_hint: {"y":0.2}
-            id: toggle_button
 
 
 <GallerySolverScreen>:

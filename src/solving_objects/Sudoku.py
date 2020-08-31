@@ -8,10 +8,12 @@ class Sudoku:
     def __init__(self, sudo=None, grid=None):
         self.possible_values_grid = np.empty((9, 9), dtype=list)
         if sudo is None:
+            self.initial_grid = np.zeros((9, 9), dtype=int)
             self.grid = np.zeros((9, 9), dtype=int)
             self.count_possible_grid = np.zeros((9, 9), dtype=int)
             self.init_sudo(grid)
         else:
+            self.initial_grid = sudo.initial_grid.copy()
             self.grid = sudo.grid.copy()
             for y in range(9):
                 for x in range(9):
@@ -47,6 +49,7 @@ class Sudoku:
         for y in range(9):
             for x in range(9):
                 value = grid[y][x]
+                self.initial_grid[y, x] = value
                 self.grid[y, x] = value
                 if value == 0:
                     self.possible_values_grid[y, x] = [1, 2, 3, 4, 5, 6, 7, 8, 9]  # list(range(1, 10))
@@ -187,6 +190,15 @@ class Sudoku:
         return True
         # return ok
 
+    def give_an_hint(self):
+        grid_ret = self.initial_grid.copy()
+        for i in range(9):
+            for j in range(9):
+                if self.initial_grid[i][j] != self.grid[i][j]:
+                    grid_ret[i][j] = self.grid[i][j]
+                    return grid_ret
+
+        return grid_ret
 
 def verify_viable_grid(grid_tested):
     for y in range(9):

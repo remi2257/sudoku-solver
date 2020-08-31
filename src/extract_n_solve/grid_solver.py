@@ -28,23 +28,25 @@ def solve_grid(sudo):  # Return if grid is solved
     return True, sudo
 
 
-def main_solve_grids(grids):
+def main_solve_grids(grids, hint_mode=False):
     finished_grids = []
     for grid in grids:
-        finished_grids.append(main_solve_grid(grid))
-
+        finished_grids.append(main_solve_grid(grid, hint_mode))
     if all(elem is None for elem in finished_grids):
         return None
     return finished_grids
 
 
-def main_solve_grid(grid):
+def main_solve_grid(grid, hint_mode=False):
     if grid is None:
         return None
     sudo = Sudoku(grid=grid)
     ret, finished_sudo = solve_grid(sudo)
     if ret:
-        return finished_sudo.grid
+        if not hint_mode:
+            return finished_sudo.grid
+        else:
+            return sudo.give_an_hint()
     else:
         return None
 

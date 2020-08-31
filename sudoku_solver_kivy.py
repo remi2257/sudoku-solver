@@ -1,155 +1,13 @@
 import kivy
 from kivy.app import App
-from kivy.lang import Builder
-from kivy.clock import Clock
-
-from kivy.properties import ObjectProperty
 from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.button import Button
 
-from kivy.uix.image import Image
-from kivy.graphics.texture import Texture
-
-from kivy.uix.widget import Widget
-# from kivy.uix.togglebutton import ToggleButton
-
-import cv2
-from tensorflow.keras.models import load_model
-
-from src.main_single_img import process_single_img
+from ui.LiveSolverScreen import LiveSolverScreen
+from ui.GallerySolverScreen import GallerySolverScreen
 
 kivy.require('1.9.0')
-
-model_default_name = 'model/my_model.h5'
-
-
-# noinspection PyArgumentList
-def convert_opencv_to_texture(frame):
-    if frame is None:
-        return Texture()
-    buf1 = cv2.flip(frame, 0)
-    buf = buf1.tostring()
-    image_texture = Texture.create(
-        size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
-    image_texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
-
-    return image_texture
-
-
-def convert_texture_to_opencv(texture):
-    pixels = texture.pixels
-    img_opencv = cv2.flip(pixels, 0)
-
-    return img_opencv
-
-
-class MyKivyCamera(Image):
-
-    def __init__(self, fps=30, **kwargs):
-        super().__init__(**kwargs)
-
-        self.android = kivy.platform == 'android'
-        self.__freeze = False
-        self.last_image_read = None
-
-        self.capture = None
-        Clock.schedule_interval(self.update, 1.0 / fps)
-
-    def update(self, _dt):
-        ret, frame = self.read_img()
-        if ret:
-            self.last_image_read = frame
-
-            if not self.__freeze:
-                # display image from the texture
-                self.texture = convert_opencv_to_texture(frame)
-
-    def start_capture(self):
-        if self.android:
-            self.capture = None
-        else:
-            self.capture = cv2.VideoCapture(-1)
-            self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-            self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-
-    def stop_capture(self):
-        if self.android:
-            pass
-        else:
-            self.capture.release()
-        self.capture = None
-
-    def read_img(self):
-        if self.capture is None:
-            return False, None
-
-        if self.android:
-            return False, None
-
-        else:
-            return self.capture.read()
-
-
-class MonBouton(Widget):
-    btn1 = ObjectProperty(None)
-    btn2 = ObjectProperty(None)
-
-
-class SolverScreen(Screen):
-
-    def __init__(self, **kwargs):
-        super(SolverScreen, self).__init__(**kwargs)
-
-        self.model = load_model(model_default_name)
-
-    @property
-    def target_image(self):
-        raise NotImplementedError
-
-    def solve(self):
-        frame = self.target_image
-        solved_frame = process_single_img(frame, self.model)
-        self.display_solved(solved_frame)
-
-    def display_solved(self, opencv_frame):
-        raise NotImplementedError
-
-
-class LiveSolverScreen(SolverScreen):
-    camera = ObjectProperty(None)
-
-    def __init__(self, **kwargs):
-        super(LiveSolverScreen, self).__init__(**kwargs)
-
-        self.model = load_model(model_default_name)
-
-    @property
-    def target_image(self):
-        return self.camera.last_image_read
-
-    def display_solved(self, opencv_frame):
-        self.camera.texture = convert_opencv_to_texture(opencv_frame)
-
-    def start_stream(self):
-        self.camera.start_capture()
-
-    def stop_stream(self):
-        self.camera.stop_capture()
-
-
-class GallerySolverScreen(SolverScreen):
-    """
-    Voir FileChooser
-    https://kivy.org/doc/stable/api-kivy.uix.filechooser.html
-    """
-    kivy_image = ObjectProperty(None)
-    original_image = None
-
-    @property
-    def target_image(self):
-        return self.original_image
-
-    def display_solved(self, opencv_frame):
-        self.camera.texture = convert_opencv_to_texture(opencv_frame)
 
 
 class ManualSolverScreen(Screen):
@@ -165,32 +23,83 @@ class AboutScreen(Screen):
 
 
 class MainScreen(Screen):
-    pass
+    def __init__(self, **kwargs):
+        super(Screen, self).__init__(**kwargs)
+
+        float_layout = FloatLayout()
+
+        float_layout.add_widget(
+            Button(id="button_help", text="Help",
+                   pos_hint={"top": 0.95}, size_hint_y=0.1,
+                   on_release=self.button_help)
+        )
+
+        float_layout.add_widget(
+            Button(id="button_live_solver", text="Live Solver",
+                   pos_hint={"top": 0.8}, size_hint_y=0.1,
+                   on_release=self.button_live_solver)
+        )
+
+        float_layout.add_widget(
+            Button(id="button_gallery_solver", text="Gallery Solver",
+                   pos_hint={"top": 0.65}, size_hint_y=0.1,
+                   on_release=self.button_gallery_solver)
+        )
+
+        float_layout.add_widget(
+            Button(id="button_manual_solver", text="Manual Solver",
+                   pos_hint={"top": 0.5}, size_hint_y=0.1,
+                   on_release=self.button_manual_solver)
+        )
+
+        float_layout.add_widget(
+            Button(id="button_about", text="About",
+                   pos_hint={"top": 0.3}, size_hint_y=0.1,
+                   on_release=self.button_about)
+        )
+
+        self.add_widget(float_layout)
+
+    def button_help(self, _button_state):
+        self.manager.transition.direction = "down"
+        self.manager.current = "help"
+
+    def button_live_solver(self, _button_state):
+        self.manager.transition.direction = "right"
+        self.manager.current = "live_solver"
+
+        # index_live_solver = self.manager.screen_names.index("live_solver")
+        self.manager.current_screen.start_stream()
+
+    def button_gallery_solver(self, _button_state):
+        self.manager.transition.direction = "left"
+        self.manager.current = "gallery_solver"
+
+    def button_manual_solver(self, _button_state):
+        self.manager.transition.direction = "left"
+        self.manager.current = "manual_solver"
+
+    def button_about(self, _button_state):
+        self.manager.transition.direction = "up"
+        self.manager.current = "about"
 
 
 class WindowManager(ScreenManager):
-    pass
+    def __init__(self, **kwargs):
+        super(WindowManager, self).__init__(**kwargs)
 
-
-kv = Builder.load_file("sudoku.kv")
+        self.add_widget(MainScreen(name="main", id="main"))
+        self.add_widget(HelpScreen(name="help", id="help"))
+        self.add_widget(LiveSolverScreen(name="live_solver", id="live_solver"))
+        self.add_widget(GallerySolverScreen(name="gallery_solver", id="gallery_solver"))
+        self.add_widget(ManualSolverScreen(name="manual_solver", id="manual_solver"))
+        self.add_widget(AboutScreen(name="about", id="about"))
 
 
 class SudokuSolverApp(App):
     def build(self):
-        return kv
+        return WindowManager()
 
 
 if __name__ == "__main__":
     SudokuSolverApp().run()
-
-"""
-Useful stuff
-
-def display_solved(self, frame):
-    self.manager.ids.solver.image.texture = MyCamera.convert_to_texture(frame)
-    self.manager.transition.direction = "left"
-    self.manager.current = "solver"
-
-
-
-"""

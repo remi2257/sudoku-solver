@@ -10,7 +10,7 @@ font_scale = 1.2
 thickness = 2
 
 
-def recreate_img_filled(frame, im_grids, points_grids, list_transform_matrix,ratio=None):
+def recreate_img_filled(frame, im_grids, points_grids, list_transform_matrix, ratio=None):
     # from src.fonctions import resize
 
     target_h, target_w = frame.shape[:2]
@@ -63,7 +63,7 @@ def write_solved_grids(frames, grids_matrix, solved_grids):
         h_im, w_im = frame.shape[:2]
         for y in range(9):
             for x in range(9):
-                if grid_init[y, x] != 0:
+                if grid_init[y, x] != 0 or solved_grid[y, x] == 0:
                     continue
                 true_y, true_x = int((y + 0.5) * h_im / 9), int((x + 0.5) * w_im / 9)
                 digit = str(solved_grid[y, x])

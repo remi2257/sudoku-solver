@@ -13,7 +13,7 @@ save_folder = "images_save/"
 model_default_name = 'model/my_model.h5'
 
 
-def process_single_img(frame, model, save=False):
+def process_single_img(frame, model, hint_mode=False, save=False):
     # Resizing image
     if frame.shape[0] > 1000 or frame.shape[0] < 800:
         old_shape = frame.shape
@@ -32,7 +32,7 @@ def process_single_img(frame, model, save=False):
         return frame
 
     # Solving grids
-    grids_solved = main_solve_grids(grids_matrix)
+    grids_solved = main_solve_grids(grids_matrix, hint_mode=hint_mode)
 
     if grids_solved is None:
         return frame
