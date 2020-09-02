@@ -1,5 +1,5 @@
 from .SolverScreen import SolverScreen
-from .MyKivyCamera import MyKivyCamera, convert_opencv_to_texture
+from uix.MyKivyCamera import MyKivyCamera, convert_opencv_to_texture
 # from.BackButton import BackButton
 from kivy.uix.button import Button
 
