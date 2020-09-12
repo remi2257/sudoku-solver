@@ -15,6 +15,7 @@ CAMERA_PORT = 1
 # PATHS
 my_dataset_path = "/media/hdd_linux/DataSet/Mine/"
 temp_dataset_path = "/media/hdd_linux/DataSet/Mine/temp"
+model_default_path = 'model/my_model.h5'
 
 # ----TEXT DISPLAY----#
 RED = (0, 0, 255)
@@ -35,8 +36,8 @@ param_resize_width = 1600
 resize_height_hough = 360
 resize_width_hough = 640
 
-output_width = 1365 #853
-output_height = 768 # 480
+output_width = 1365  # 853
+output_height = 768  # 480
 
 ratio_resize_hough = float(param_resize_height) / resize_height_hough
 
@@ -110,9 +111,9 @@ def logger_gen(level='DEBUG'):
     # logging.basicConfig(format='%[levelname]s : %(message)s')
     logging.basicConfig(format='%(message)s')
 
-    logger = logging.getLogger(__name__)
+    logger_obj = logging.getLogger(__name__)
 
-    logger.setLevel(level)
+    logger_obj.setLevel(level)
 
     # create a file handler
     handler = logging.FileHandler('logger.log')
@@ -123,9 +124,9 @@ def logger_gen(level='DEBUG'):
     # handler.setFormatter(formatter)
 
     # add the handlers to the logger
-    logger.addHandler(handler)
+    logger_obj.addHandler(handler)
 
-    return logger
+    return logger_obj
 
 
 logger = logger_gen()

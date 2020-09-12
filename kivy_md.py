@@ -1,19 +1,20 @@
 from kivymd.app import MDApp
 from kivymd.uix.bottomnavigation import MDBottomNavigation
 from uix.ScreenAbout import ScreenAbout
-from uix.LiveSolverScreen import LiveSolverScreen
-from uix.ScreenReporting import ScreenReporting
-from uix.ScreenTrain import ScreenTrain
-from kivymd.color_definitions import text_colors
+from uix.ScreenLiveSolver import ScreenLiveSolver
+from uix.ScreenGallerySolver import ScreenGallerySolver
+
+from src.Solver import Solver
 
 
 class BottomNav(MDBottomNavigation):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # self.text_color_active = text_colors["Red"]["50"]
-        # self.text_color_normal = [1, 0, 1, 1]
-        # self.panel_color = [.2, .2, .2, 1]
-        self.add_widget(LiveSolverScreen(name="Predict", id="Predict"))
+
+        solver = Solver()
+
+        self.add_widget(ScreenLiveSolver(solver=solver, name="Live Solver", id="Live Solver"))
+        self.add_widget(ScreenGallerySolver(solver=solver, name="Gallery Solver", id="Gallery Solver"))
         self.add_widget(ScreenAbout(name="About", id="About"))
 
 
@@ -22,4 +23,5 @@ class SudokuAppApp(MDApp):
         return BottomNav()
 
 
-SudokuAppApp().run()
+if __name__ == '__main__':
+    SudokuAppApp().run()
