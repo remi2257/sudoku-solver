@@ -4,14 +4,14 @@ from uix.ScreenAbout import ScreenAbout
 from uix.ScreenLiveSolver import ScreenLiveSolver
 from uix.ScreenGallerySolver import ScreenGallerySolver
 
-from src.Solver import Solver
+from src.SolverVR import SolverVR
 
 
 class BottomNav(MDBottomNavigation):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        solver = Solver()
+        solver = SolverVR()
 
         self.add_widget(ScreenLiveSolver(solver=solver, name="Live Solver", id="Live Solver"))
         self.add_widget(ScreenGallerySolver(solver=solver, name="Gallery Solver", id="Gallery Solver"))

@@ -121,7 +121,7 @@ def add_annotation_to_image(img, text, write_on_top=True):
     font_scale_used = font_scale_small
     thickness_used = thickness_small
     h_im, w_im = img.shape[:2]
-    (text_width, text_height), baseline = cv2.getTextSize(text, font, fontScale=font_scale_used,
+    (text_width, text_height), baseline = cv2.getTextSize(text, font_base, fontScale=font_scale_used,
                                                           thickness=thickness_used)
     text_true_height = text_height + baseline
     if write_on_top:
@@ -130,7 +130,7 @@ def add_annotation_to_image(img, text, write_on_top=True):
                       WHITE, cv2.FILLED)
         cv2.putText(img, text,
                     (round(text_width * 0.05), round(text_true_height * 1.2 - baseline)),
-                    font, font_scale_used, ORANGE, thickness_used)
+                    font_base, font_scale_used, ORANGE, thickness_used)
     else:
         cv2.rectangle(img,
                       (round(text_width * 1.1), h_im - round(text_true_height * 1.35)),
@@ -138,7 +138,7 @@ def add_annotation_to_image(img, text, write_on_top=True):
                       WHITE, cv2.FILLED)
         cv2.putText(img, text,
                     (round(text_width * 0.05), h_im - baseline),
-                    font, font_scale_used, ORANGE, thickness_used)
+                    font_base, font_scale_used, ORANGE, thickness_used)
     return img
 
 

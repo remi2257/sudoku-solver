@@ -90,12 +90,12 @@ class ScreenGallerySolver(MDBottomNavigationItem):
 
 if __name__ == '__main__':
     from kivymd.app import MDApp
-    from src.Solver import Solver
+    from src.SolverVR import SolverVR
 
 
     class GallerySolverApp(MDApp):
         def build(self):
-            return ScreenGallerySolver(Solver())
+            return ScreenGallerySolver(SolverVR())
 
 
     GallerySolverApp().run()

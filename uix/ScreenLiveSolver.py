@@ -124,12 +124,12 @@ class ScreenLiveSolver(MDBottomNavigationItem):
 
 if __name__ == '__main__':
     from kivymd.app import MDApp
-    from src.Solver import Solver
+    from src.SolverVR import SolverVR
 
 
     class LiveSolverApp(MDApp):
         def build(self):
-            return ScreenLiveSolver(Solver())
+            return ScreenLiveSolver(SolverVR())
 
 
     LiveSolverApp().run()

@@ -21,15 +21,14 @@ class Sudoku:
             self.count_possible_grid = sudo.count_possible_grid.copy()
 
     def __str__(self):
-        string = "-" * 18
-        for y in range(9):
-            string += "\n|"
-            for x in range(9):
-                string += str(self.grid[y, x]) + "|"
-        string += "\n"
-        string += "-" * 18
-
-        return string
+        l_string = ["-" * 25]
+        for i, row in enumerate(self.grid):
+            l_string += [("|" + " {} {} {} |" * 3).format(*[x if x != 0 else " " for x in row])]
+            if i == 8:
+                l_string += ["-" * 25]
+            elif i % 3 == 2:
+                l_string += ["|" + "-------+" * 2 + "-------|"]
+        return "\n".join(l_string)
 
     def apply_hypothesis_value(self, x, y, value):
         self.grid[y, x] = value
@@ -199,6 +198,7 @@ class Sudoku:
                     return grid_ret
 
         return grid_ret
+
 
 def verify_viable_grid(grid_tested):
     for y in range(9):

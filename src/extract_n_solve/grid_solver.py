@@ -1,54 +1,51 @@
 from src.solving_objects.Sudoku import *
 
 
-def solve_grid(sudo):  # Return if grid is solved
-    while not sudo.is_filled():
-        # sudo.get_possible_values()
-        if sudo.should_make_hypothesis():
-            x, y, possible_values_hyp = sudo.best_hypothesis()
-            if not possible_values_hyp:  # At least one free spot can't have a solution
-                return False, None
-            for val in possible_values_hyp:
-                new_sudo = Sudoku(sudo=sudo)
-                new_sudo.apply_hypothesis_value(x, y, val)
-                ret, solved_sudo = solve_grid(new_sudo)
-                if ret:
-                    return True, solved_sudo  # SOMETHING HAS BEEN SOLVED
-                else:
-                    del new_sudo
-            return False, None  # None hypothesis lead to something
+class GridSolver:
+    def __init__(self):
+        pass
+
+    def solve_grids(self, grids, hint_mode=False):
+        return [self.solve_grid(grid, hint_mode) for grid in grids]
+
+    def solve_grid(self, grid, hint_mode=False):
+        if grid is None:
+            return None
+        sudo = Sudoku(grid=grid)
+        ret, finished_sudo = self.process_solving_grid(sudo)
+        if ret:
+            if not hint_mode:
+                return finished_sudo.grid
+            else:
+                return sudo.give_an_hint()
         else:
-            ret = sudo.apply_unique_possibilities()
-            if ret is False:
-                # print(sudo)
-                # print("ARF")
-                del sudo
-                return False, None
-    # print("COMING HOME")
-    return True, sudo
+            return None
 
-
-def main_solve_grids(grids, hint_mode=False):
-    finished_grids = []
-    for grid in grids:
-        finished_grids.append(main_solve_grid(grid, hint_mode))
-    if all(elem is None for elem in finished_grids):
-        return None
-    return finished_grids
-
-
-def main_solve_grid(grid, hint_mode=False):
-    if grid is None:
-        return None
-    sudo = Sudoku(grid=grid)
-    ret, finished_sudo = solve_grid(sudo)
-    if ret:
-        if not hint_mode:
-            return finished_sudo.grid
-        else:
-            return sudo.give_an_hint()
-    else:
-        return None
+    def process_solving_grid(self, sudo):  # Return if grid is solved
+        while not sudo.is_filled():
+            # sudo.get_possible_values()
+            if sudo.should_make_hypothesis():
+                x, y, possible_values_hyp = sudo.best_hypothesis()
+                if not possible_values_hyp:  # At least one free spot can't have a solution
+                    return False, None
+                for val in possible_values_hyp:
+                    new_sudo = Sudoku(sudo=sudo)
+                    new_sudo.apply_hypothesis_value(x, y, val)
+                    ret, solved_sudo = self.process_solving_grid(new_sudo)
+                    if ret:
+                        return True, solved_sudo  # SOMETHING HAS BEEN SOLVED
+                    else:
+                        del new_sudo
+                return False, None  # None hypothesis lead to something
+            else:
+                ret = sudo.apply_unique_possibilities()
+                if ret is False:
+                    # print(sudo)
+                    # print("ARF")
+                    del sudo
+                    return False, None
+        # print("COMING HOME")
+        return True, sudo
 
 
 if __name__ == '__main__':
@@ -101,12 +98,14 @@ if __name__ == '__main__':
 
     target_grid = grid1
     init = time.time()
-    f_sudo = main_solve_grid(target_grid)
+    solver = GridSolver()
+    f_sudo = solver.solve_grid(target_grid)
     print(Sudoku(grid=target_grid))
     if f_sudo is None:
         print("echec")
     else:
-        print(f_sudo)
-        print("Validated ?", Sudoku(grid=f_sudo).verify_result())
+        sudo_res = Sudoku(grid=f_sudo)
+        print(sudo_res)
+        print("Validated ?", sudo_res.verify_result())
 
     print("Took {:.1f} ms".format(1000 * (time.time() - init)))

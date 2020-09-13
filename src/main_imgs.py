@@ -5,7 +5,7 @@ from tensorflow.keras.models import load_model
 from tqdm import tqdm
 
 from src.extract_n_solve.extract_digits import process_extract_digits
-from src.extract_n_solve.grid_detector_img import main_grid_detector_img
+from src.extract_n_solve.grid_detector import main_grid_detector_img
 from src.extract_n_solve.grid_solver import main_solve_grids
 from src.extract_n_solve.new_img_generator import *
 from src.useful_functions import my_resize

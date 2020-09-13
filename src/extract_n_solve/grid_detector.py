@@ -6,203 +6,6 @@ from src.solving_objects.MyHoughPLines import *
 from src.useful_functions import my_resize
 
 
-# from src.fonctions import timer_decorator
-# import time
-
-
-def nothing(x):
-    pass
-
-
-def show_big_image(frame_resize, prepro_im, img_lines, img_contour, use_hough=False):
-    if not use_hough:
-        im_res = np.concatenate((frame_resize, img_contour), axis=0)
-    else:
-        top = np.concatenate((frame_resize, cv2.cvtColor(prepro_im, cv2.COLOR_GRAY2BGR)), axis=1)
-        bot = np.concatenate((cv2.cvtColor(img_lines, cv2.COLOR_GRAY2BGR), img_contour), axis=1)
-        im_res = np.concatenate((top, bot), axis=0)
-        h_im, w_im, _ = im_res.shape
-
-        text1 = "0/ Initial Image"
-        text2 = "1/ Preprocessed Image"
-        text3 = "2/ Hough Transform"
-        text4 = "3/ Grids Extraction"
-
-        (text_width, text_height) = cv2.getTextSize(text1, font, fontScale=font_scale_normal, thickness=thickness_normal)[0]
-        # cv2.putText(im_res, text1,
-        #             (w_im // 2 - text_width - 30, h_im // 2 - 30),
-        #             font, font_scale_normal, WHITE, thickness_normal * 3)
-        cv2.rectangle(im_res, (0, 0),
-                      (text_width + 30, text_height + 30),
-                      WHITE, cv2.FILLED)
-        cv2.putText(im_res, text1,
-                    (10, text_height + 10),
-                    font, font_scale_normal, RED, thickness_normal)
-
-        (text_width, text_height) = cv2.getTextSize(text2, font, fontScale=font_scale_normal, thickness=thickness_normal)[0]
-        cv2.rectangle(im_res, (w_im // 2, 0),
-                      (w_im // 2 + text_width + 30, text_height + 30),
-                      WHITE, cv2.FILLED)
-        cv2.putText(im_res, text2,
-                    (w_im // 2 + 10, text_height + 10),
-                    font, font_scale_normal, RED, thickness_normal)
-
-        (text_width, text_height) = cv2.getTextSize(text3, font, fontScale=font_scale_normal, thickness=thickness_normal)[0]
-        cv2.rectangle(im_res, (0, h_im // 2),
-                      (text_width + 30, h_im // 2 + text_height + 30),
-                      WHITE, cv2.FILLED)
-        cv2.putText(im_res, text3,
-                    (10, h_im // 2 + text_height + 10),
-                    font, font_scale_normal, RED, thickness_normal)
-
-        (text_width, text_height) = cv2.getTextSize(text4, font, fontScale=font_scale_normal, thickness=thickness_normal)[0]
-        cv2.rectangle(im_res, (w_im // 2, h_im // 2),
-                      (w_im // 2 + text_width + 30, h_im // 2 + text_height + 30),
-                      WHITE, cv2.FILLED)
-        cv2.putText(im_res, text4,
-                    (w_im // 2 + 10, h_im // 2 + text_height + 10),
-                    font, font_scale_normal, RED, thickness_normal)
-
-    cv2.imshow('res', my_resize(im_res, height=900))
-
-
-def show_thresh_adaptive(gray_enhance):
-    while (1):
-        cv2.imshow('image', gray_enhance)
-
-        # get current positions of four trackbars
-        A = max(3, 1 + 2 * cv2.getTrackbarPos('B1', 'track'))
-        B = cv2.getTrackbarPos('M1', 'track')
-        C = max(3, 1 + 2 * cv2.getTrackbarPos('B', 'track'))
-        D = cv2.getTrackbarPos('M', 'track')
-        adap = cv2.getTrackbarPos('M/G', 'track')
-        blur_size = 2 * cv2.getTrackbarPos('blur_size', 'track') + 1
-
-        if adap == 0:
-            adap = cv2.ADAPTIVE_THRESH_MEAN_C
-        else:
-            adap = cv2.ADAPTIVE_THRESH_GAUSSIAN_C
-        blurred = cv2.GaussianBlur(gray_enhance, (blur_size, blur_size), 0)
-        thresh = cv2.adaptiveThreshold(gray_enhance, 255, adap, cv2.THRESH_BINARY, A, B)
-        thresh2 = cv2.adaptiveThreshold(blurred, 255, adap, cv2.THRESH_BINARY, C, D)
-
-        cv2.imshow('thresh', thresh)
-        cv2.imshow('thresh_with_blur', thresh2)
-        k = cv2.waitKey(1) & 0xFF
-        if k == 27:
-            break
-
-
-def show_trackbar_adap_thresh(gray_enhance):
-    max_block = 40
-    max_mean = 80
-    cv2.namedWindow('track')
-    cv2.createTrackbar('B1', 'track', block_size_big // 2 + 1, max_block, nothing)
-    cv2.createTrackbar('M1', 'track', mean_sub_big, max_mean, nothing)
-    cv2.createTrackbar('B', 'track', block_size_big // 2 + 1, max_block, nothing)
-    cv2.createTrackbar('M', 'track', mean_sub_big, max_mean, nothing)
-    cv2.createTrackbar('M/G', 'track', 0, 1, nothing)
-    cv2.createTrackbar('blur_size', 'track', 1, 5, nothing)
-    show_thresh_adaptive(gray_enhance)
-
-
-def show_hough(edges):
-    # cv2.imshow("edges", edges)
-    # old_values = [-1,-1,-1]
-    while (1):
-        w = cv2.getTrackbarPos('width', 'track')
-        edges_resize = my_resize(edges, width=max(100, w))
-        cv2.imshow("edges_resize", edges_resize)
-
-        A = cv2.getTrackbarPos('thresh', 'track')
-        B = cv2.getTrackbarPos('minLineLength', 'track')
-        C = cv2.getTrackbarPos('maxLineGa', 'track')
-        rho = max(1, cv2.getTrackbarPos('rho', 'track'))
-        theta = max(1, cv2.getTrackbarPos('theta', 'track')) * np.pi / 180
-        my_lines = []
-
-        img_lines = np.zeros((edges_resize.shape[:2]), np.uint8)
-
-        lines_raw = cv2.HoughLinesP(edges_resize, rho=rho, theta=theta, threshold=A,
-                                    minLineLength=B, maxLineGap=C)
-
-        img_binary_lines = cv2.cvtColor(edges_resize, cv2.COLOR_GRAY2BGR)
-        if lines_raw is not None:
-            for line in lines_raw:
-                my_lines.append(MyHoughPLines(line))
-
-            for line in my_lines:
-                x1, y1, x2, y2 = line.get_limits()
-                cv2.line(img_lines, (x1, y1), (x2, y2), 255, 2)
-
-            for line in my_lines:
-                x1, y1, x2, y2 = line.get_limits()
-                cv2.line(img_binary_lines, (x1, y1), (x2, y2), (0, 0, 255), 2)
-
-        # cv2.imshow('img_lines', resize(img_lines, width=900))
-        cv2.imshow('img_lines', img_lines)
-        # cv2.imshow('img_binary_lines', resize(img_binary_lines, width=900))
-        cv2.imshow('img_binary_lines', img_binary_lines)
-        k = cv2.waitKey(10) & 0xFF
-        if k == 27:
-            break
-
-
-def show_trackbar_hough(edges):
-    max_thresh = 300
-    max_maxLineGap = 20
-    max_minLineLength = 20
-    max_rho = 20
-    max_theta = 20
-    cv2.namedWindow('track')
-    cv2.createTrackbar('width', 'track', 900, 1200, nothing)
-    cv2.createTrackbar('thresh', 'track', 100, max_thresh, nothing)
-    cv2.createTrackbar('minLineLength', 'track', 5, max_minLineLength, nothing)
-    cv2.createTrackbar('maxLineGa', 'track', 5, max_maxLineGap, nothing)
-    cv2.createTrackbar('rho', 'track', 1, max_rho, nothing)
-    cv2.createTrackbar('theta', 'track', 1, max_theta, nothing)
-    show_hough(edges)
-
-
-def preprocess_im(frame, using_webcam=False):
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    gray_enhance = (gray - gray.min()) * int(255 / (gray.max() - gray.min()))
-    if display_prepro_big:
-        show_trackbar_adap_thresh(gray_enhance)
-
-    if using_webcam:
-        thresh = cv2.adaptiveThreshold(gray_enhance, 255,
-                                       cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,
-                                       block_size_webcam_big, mean_sub_webcam_big)
-
-        thresh_not = cv2.bitwise_not(thresh)
-
-        dilate = cv2.morphologyEx(thresh_not, cv2.MORPH_DILATE, np.ones((3, 3), np.uint8))  # Delete space between line
-
-        return dilate
-
-        # kernel_close = np.ones((5, 5), np.uint8)
-        # closing = cv2.morphologyEx(thresh_not, cv2.MORPH_CLOSE, kernel_close)  # Delete space between line
-        # return closing
-    else:
-        blurred = cv2.GaussianBlur(gray_enhance, (5, 5), 0)
-        thresh = cv2.adaptiveThreshold(blurred, 255,
-                                       cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,
-                                       block_size_big, mean_sub_big)
-
-        thresh_not = cv2.bitwise_not(thresh)
-
-        # kernel_open = np.ones((3, 3), np.uint8)
-        # opening = cv2.morphologyEx(thresh_not, cv2.MORPH_OPEN, kernel_open)  # Denoise
-        kernel_close = np.ones((5, 5), np.uint8)
-        closing = cv2.morphologyEx(thresh_not, cv2.MORPH_CLOSE, kernel_close)  # Delete space between line
-        dilate = cv2.morphologyEx(closing, cv2.MORPH_DILATE, kernel_close)  # Delete space between line
-        #
-        # return closing
-        return dilate
-
-
 def flood_fill_grid(thresh):
     max_area = -1
     maxPt = (0, 0)
@@ -415,8 +218,11 @@ def get_hough_transform(img, edges, display=False):
     else:
         return grid_limits, img, img_after_merge
 
+
 import time
-def undistorted_grids(frame, points_grids, ratio):
+
+
+def get_undistorted_grids(frame, points_grids, ratio):
     undistorted = []
     true_points_grids = []
     transfo_matrix = []
@@ -454,8 +260,82 @@ def main_grid_detector_img(frame, resized=True, display=False, using_webcam=Fals
 
     if extreme_points_biased is None:
         return None, None, None
-    grids_final, points_grids, transfo_matrix = undistorted_grids(frame, extreme_points_biased, ratio)
+    grids_final, points_grids, transfo_matrix = get_undistorted_grids(frame, extreme_points_biased, ratio)
     return grids_final, points_grids, transfo_matrix
+
+
+class GridDetector:
+    def __init__(self, display=False):
+        self.__display = display
+
+    def extract_grids(self, frame):
+        # Get a threshed image which emphasize lines
+        threshed_img = self.thresh_img(frame)
+
+        # Look for grids corners
+        grids_corners_list = self.look_for_grids_corners(threshed_img)
+
+        # Use grids corners to unwrap img !
+        unwraped_grid_list, transfo_matrix = self.unwrap_grids(frame, grids_corners_list)
+        return unwraped_grid_list, grids_corners_list, transfo_matrix
+
+    @staticmethod
+    def thresh_img(frame):
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        gray_enhance = (gray - gray.min()) * int(255 / (gray.max() - gray.min()))
+
+        blurred = cv2.GaussianBlur(gray_enhance, (5, 5), 0)
+        thresh = cv2.adaptiveThreshold(blurred, 255,
+                                       cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,
+                                       block_size_big, mean_sub_big)
+
+        thresh_not = cv2.bitwise_not(thresh)
+
+        kernel_close = np.ones((5, 5), np.uint8)
+        closing = cv2.morphologyEx(thresh_not, cv2.MORPH_CLOSE, kernel_close)  # Delete space between line
+        dilate = cv2.morphologyEx(closing, cv2.MORPH_DILATE, kernel_close)  # Delete space between line
+        return dilate
+
+    @staticmethod
+    def unwrap_grids(frame, points_grids):
+        undistorted_grids = []
+        transfo_matrix_list = []
+        for points_grid in points_grids:
+            final_pts = np.array(
+                [[0, 0], [target_w_grid - 1, 0],
+                 [target_w_grid - 1, target_h_grid - 1], [0, target_h_grid - 1]],
+                dtype=np.float32)
+            transfo_mat = cv2.getPerspectiveTransform(points_grid, final_pts)
+            undistorted_grids.append(cv2.warpPerspective(frame, transfo_mat, (target_w_grid, target_h_grid)))
+            transfo_matrix_list.append(np.linalg.inv(transfo_mat))
+        return undistorted_grids, transfo_matrix_list
+
+    @staticmethod
+    def look_for_grids_corners(img_lines):
+        contours, _ = cv2.findContours(img_lines, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        best_contours = []
+        contours = sorted(contours, key=cv2.contourArea, reverse=True)
+
+        biggest_area = cv2.contourArea(contours[0])
+
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if area < smallest_area_allow:
+                break
+            if area > biggest_area / ratio_lim:
+                peri = cv2.arcLength(cnt, True)
+                approx = cv2.approxPolyDP(cnt, approx_poly_coef * peri, True)
+                if len(approx) == 4:
+                    best_contours.append(approx)
+
+        if not best_contours:
+            return None
+        corners = []
+        for best_contour in best_contours:
+            corners.append(find_corners(best_contour))
+
+        return np.array(corners, dtype=np.float32)
 
 
 if __name__ == '__main__':
@@ -465,7 +345,7 @@ if __name__ == '__main__':
     # im_path = "images_test/imagedouble.jpg"
     # im_path = "images_test/izi_distord.jpg"
     im = cv2.imread(im_path)
-    cv2.imshow("im",im)
+    cv2.imshow("im", im)
     res_grids_final, _, _ = main_grid_detector_img(im, resized=False, display=True,
                                                    using_webcam=False, use_hough=True)
     if res_grids_final is not None:
