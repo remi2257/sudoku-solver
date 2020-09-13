@@ -1,6 +1,6 @@
 # sudoku-solver
-Hi, my name is Rémi LUX. I end my final year of Computer Vision Degree in Grenoble INP - Phelma, and I'm now engineer at Niryo.
-Welcome to my project  
+Hi, my name is Rémi LUX. Currently engineer at Niryo, I code this sudoku solver during
+my free time.
 My algorithm is able to detect and to directly solve sudokus in VR
 
 <p align="center">
@@ -53,40 +53,33 @@ as an already solved grid
 
 ## How to use ?
 
+### Dependencies
+You will need some libraries before running it  
+- Numpy
+- OpenCV 
+- Tensorflow
+- KivyMD >= 1.11.1 (as this version isn't publish on Pypi yet, 
+you should install it form the [KivyMD repo])
+
+### Run the program
 The best way to use my algorithm is to firstly clone the git
 repo where you want to.
 Then, open a terminal & go in the repository  
 `cd /path/to/the/folder/`
 
-You can see the options by typing
-`python3 sudoku_solver_main.py -h`  
+Then, simply use the command
 
-You will need some libraries before running it  
-- Numpy
-- OpenCV 
-- Keras
-- Tensorflow
+`python3 kivy_md.py`  
 
-To Install : `pip install <library_name>` 
-
-#### Easy way
-Take your own picture/video of your process target and use the command  
-`python3 sudoku_solver_main.py -i path/to/your/file`  
-You also want to add `-s` to save the output result
-In both cases, the result will be display on your monitor during processing
-
-If you want to use your webcam, you can chose the profile n°2
-by adding `-p 2` to your command. Nevertheless, the algorithm
-is too long to give a real-time pleasant experience (mainly cause
-of the Hough Transform)
-
-#### Advanced way
-The user can use his own Keras model to identify digits.
-For that use the parameter `-mp path/to/your/model` 
 
 ## Evolution, TODO list, Q&A, ...
 ### Evolution of the Algorithm
+#### Application
+| Version | Visu  |
+:-------------------------:|:-------------------------:
+2.0 | TODO
 
+#### Python Script
 | Version | Source      |  Algorithm Output |
 :-------------------------:|:-------------------------:|:-------------------------:
 1.5 | Video | <img src="https://user-images.githubusercontent.com/39727257/57652501-0213a500-75d0-11e9-9f14-2a3bada71923.gif" width="400"/>
@@ -103,15 +96,14 @@ with data augmentation. It gave me a precision of 99.5+ %
 
 ### TODO LIST
 
-- [X] More Robust (v1.2)
-- [X] Video Live Solving (v1.4)
-- [X] Better (v1.5)
-- [X] Stronger (v1.6)
-- [X] Faster (v1.7)
-- [X] Improve Training(v1.7)
-- [ ] ~~Multi-threading Processing~~
+- [ ] Create App
+- [ ] Adapt App for phone !
 
 ### VERSION LIST
+
+- v2.0 : Creating the first App' version | 13/09/20
+    - Clean old code
+    - Use of Kivy
 
 - v1.7 : Multiple performance improvement | 17/12/19
     - New training method
@@ -129,3 +121,5 @@ with data augmentation. It gave me a precision of 99.5+ %
 - v1.2 : Multiple grids baby ! | 02/05/19
 - v1.1 : Use probabilistic Hough & detect grid better | 01/054/19
 - v1.0 : First version | 28/04/19
+
+[KivyMD repo]: https://github.com/kivymd/KivyMD
