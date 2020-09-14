@@ -81,7 +81,7 @@ class ScreenGallerySolver(MDBottomNavigationItem):
 
     def solve_n_display(self, frame):
         hint_mode = False
-        solved_frame = self.__solver.solve_1_img(frame, hint_mode=hint_mode)
+        solved_frame = self.__solver.solve_1_img(img=frame, hint_mode=hint_mode)
         self.set_new_image(solved_frame)
 
     def set_new_image(self, frame):

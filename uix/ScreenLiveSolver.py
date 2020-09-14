@@ -29,14 +29,13 @@ class ButtonSolve(MDFillRoundFlatIconButton):
     def is_freeze(self):
         return self.__is_freeze
 
-    def on_release(self):
-        super().on_release()
-        param_name = "solve" if self.__is_freeze else "unfreeze"
+    def override_on_release(self):
+        super(ButtonSolve, self).on_release()
+        self.__is_freeze = not self.__is_freeze
+        param_name = "unfreeze" if self.__is_freeze else "solve"
         params = self.dict_param[param_name]
         self.text = params["text"]
         self.icon = params["icon"]
-
-        self.__is_freeze = not self.__is_freeze
 
 
 class ScreenLiveSolver(MDBottomNavigationItem):
@@ -67,7 +66,7 @@ class ScreenLiveSolver(MDBottomNavigationItem):
         self.__button_full_solve = MyToggleButton(text="Full Solve", pos_hint={"center_x": 0.25, "center_y": 0.5},
                                                   group=self.__check_group)
 
-        self.__button_hint_mode.set_state(True)
+        self.__button_full_solve.set_state(True)
 
         self.__layout_options.add_widget(self.__button_hint_mode)
         self.__layout_options.add_widget(self.__button_full_solve)
@@ -91,35 +90,34 @@ class ScreenLiveSolver(MDBottomNavigationItem):
 
         frame = self.__video_stream.last_image_read
 
-        self.__last_image_read = frame
         if frame is None:
             return
 
         if not self.__solve_unfreeze_button.is_freeze:
-            self.set_new_image()
+            self.__last_image_read = frame
+            self.set_new_image(frame)
 
-    def set_new_image(self):
-        self.__image_layout.image = self.__last_image_read
+    def set_new_image(self, frame):
+        self.__image_layout.image = frame
 
     def should_give_only_hint(self):
-        return self.hint_mode_switch.is_active()
+        return self.__button_hint_mode.is_active()
 
     def callback_solve_unfreeze_button(self, *_args):
-        self.__solve_unfreeze_button.on_release()
+        self.__solve_unfreeze_button.override_on_release()
         is_freeze = self.__solve_unfreeze_button.is_freeze
-        print("Is freeze ??", is_freeze)
 
         if is_freeze:
             self.solve()
 
     def solve(self):
         hint_mode = self.should_give_only_hint()
-        solved_frame = self.__solver.solve_1_img(self.__last_image_read, hint_mode=hint_mode)
+        solved_frame = self.__solver.solve_1_img(img=self.__last_image_read, hint_mode=hint_mode)
         self.display_solved(solved_frame)
 
     def display_solved(self, solved_frame):
         self.__last_image_read = solved_frame
-        self.set_new_image()
+        self.set_new_image(solved_frame)
 
 
 if __name__ == '__main__':

@@ -329,8 +329,6 @@ class GridDetector:
                 if len(approx) == 4:
                     best_contours.append(approx)
 
-        if not best_contours:
-            return None
         corners = []
         for best_contour in best_contours:
             corners.append(find_corners(best_contour))
