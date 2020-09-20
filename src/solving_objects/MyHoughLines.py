@@ -63,15 +63,13 @@ class MyHoughLines:
 
     def merge_w_line2(self, line2):
         self.increase_count()
-        N = self.number_of_merged
+        n = self.number_of_merged
 
         if self.rho * line2.rho > 0:
-            self.rho = self.rho * (N - 1) / N + line2.rho / N
+            self.rho = self.rho * (n - 1) / n + line2.rho / n
         else:
-            self.rho = self.rho * (N - 1) / N - line2.rho / N
-        # new_theta = self.theta * (N - 1) / N + line2.theta / N
-        # self.theta = min(new_theta, np.pi - new_theta)
-        self.theta = self.theta * (N - 1) / N + line2.theta / N
+            self.rho = self.rho * (n - 1) / n - line2.rho / n
+        self.theta = self.theta * (n - 1) / n + line2.theta / n
 
         line2.set_merged()
 

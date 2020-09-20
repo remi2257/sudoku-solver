@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 from settings import *
-from src.solving_objects.Sudoku import verify_viable_grid
+from src.solving_objects.Sudoku import Sudoku, verify_viable_grid
 from tensorflow.keras.models import load_model
 
 color = (0, 155, 255)
@@ -100,6 +100,6 @@ if __name__ == '__main__':
     im = cv2.imread(im_path)
     cv2.imshow("im", im)
     extractor = DigitsExtractor(model_path='model/my_model.h5')
-    res_grids = extractor.process_single_img(im)
-    print(res_grids)
+    res_grid = extractor.process_single_img(im)
+    print(Sudoku(grid=res_grid))
     cv2.waitKey()

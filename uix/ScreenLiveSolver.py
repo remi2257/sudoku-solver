@@ -13,11 +13,11 @@ class ButtonSolve(MDFillRoundFlatIconButton):
     dict_param = {
         "solve": {
             "text": "Solve",
-            "icon": "yoga",
+            "icon": "crop-free",
         },
         "unfreeze": {
             "text": "Unfreeze",
-            "icon": "air-horn",
+            "icon": "restart",
         },
     }
 

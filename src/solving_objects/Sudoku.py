@@ -1,9 +1,6 @@
 import numpy as np
 
 
-# from src.fonctions import timer_decorator
-
-
 class Sudoku:
     def __init__(self, sudo=None, grid=None):
         self.possible_values_grid = np.empty((9, 9), dtype=list)
@@ -37,7 +34,7 @@ class Sudoku:
 
         for y2 in range(9):
             for x2 in range(9):
-                if is_affected(x, y, x2, y2) and self.grid[y2, x2] == 0:
+                if self.is_affected(x, y, x2, y2) and self.grid[y2, x2] == 0:
                     list_possible_values = self.possible_values_grid[y2, x2]
                     if value in list_possible_values:
                         list_possible_values.remove(value)
@@ -106,7 +103,7 @@ class Sudoku:
 
         for y2 in range(9):
             for x2 in range(9):
-                if is_affected(x, y, x2, y2) and self.grid[y2, x2] == 0:
+                if self.is_affected(x, y, x2, y2) and self.grid[y2, x2] == 0:
                     list_possible_values = self.possible_values_grid[y2, x2]
                     if value in list_possible_values:
                         list_possible_values.remove(value)
@@ -169,25 +166,7 @@ class Sudoku:
         return best_x, best_y, self.possible_values_grid[best_y, best_x]
 
     def verify_result(self):
-        # ok = True
-        for y in range(9):
-            for x in range(9):
-                grid = self.grid.copy()
-                grid[y, x] = 0
-                line = grid[y, :]
-                column = grid[:, x]
-                x1 = 3 * (x // 3)
-                y1 = 3 * (y // 3)
-                x2, y2 = x1 + 3, y1 + 3
-                square = grid[y1:y2, x1:x2]
-                val = self.grid[y, x]
-                if val in line or val in column or val in square:
-                    # print(x, y)
-                    # ok = False
-                    return False
-
-        return True
-        # return ok
+        return verify_viable_grid(self.grid)
 
     def give_an_hint(self):
         grid_ret = self.initial_grid.copy()
@@ -198,6 +177,18 @@ class Sudoku:
                     return grid_ret
 
         return grid_ret
+
+    @staticmethod
+    def is_affected(x1, y1, x2, y2):
+        if x1 == x2:
+            return True
+        if y1 == y2:
+            return True
+
+        if x1 // 3 == x2 // 3 and y1 // 3 == y2 // 3:
+            return True
+
+        return False
 
 
 def verify_viable_grid(grid_tested):
@@ -219,15 +210,3 @@ def verify_viable_grid(grid_tested):
                 return False
 
     return True
-
-
-def is_affected(x1, y1, x2, y2):
-    if x1 == x2:
-        return True
-    if y1 == y2:
-        return True
-
-    if x1 // 3 == x2 // 3 and y1 // 3 == y2 // 3:
-        return True
-
-    return False

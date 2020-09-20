@@ -1,14 +1,26 @@
 # sudoku-solver
 Hi, my name is Rémi LUX. Currently engineer at Niryo, I code this sudoku solver during
 my free time.
-My algorithm is able to detect and to directly solve sudokus in VR
+My algorithm is able to detect and to directly solve sudokus in VR as shown on the video
+below
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/39727257/71028243-3b376900-210d-11ea-9e81-6ba1c7c27528.gif" width="500"/>
 </p>
 
 
-## What is it doing ?
+## The Application
+
+The Application is based on [KivyMD][KivyMD repo]. It currently has 2 screens :
+- One for Live Solving which allows you to chose between full solving and hint mode
+- One which Solve image from gallery
+
+| Live Solving | Gallery Solving  |
+:-------------------------:|:-------------------------:
+![Live Solving](readme_images/live_solver_screen.png) | ![Gallery Solving](readme_images/galery_solver_screen.png)
+
+
+## How is it working ?
 For a single image process, my algorithm is using working as following :
 ### Grids  Extraction
 Firstly, the algorithm have to find where the grids are !  
@@ -65,7 +77,7 @@ you should install it form the [KivyMD repo])
 The best way to use my algorithm is to firstly clone the git
 repo where you want to.
 Then, open a terminal & go in the repository  
-`cd /path/to/the/folder/`
+`cd /path/to/the/repo/`
 
 Then, simply use the command
 
@@ -77,7 +89,7 @@ Then, simply use the command
 #### Application
 | Version | Visu  |
 :-------------------------:|:-------------------------:
-2.0 | TODO
+2.0 | ![Application](readme_images/live_solver_screen.png)
 
 #### Python Script
 | Version | Source      |  Algorithm Output |
@@ -119,7 +131,7 @@ with data augmentation. It gave me a precision of 99.5+ %
 - v1.4 : Video Handling | 08/05/19
 - v1.3 : More flexible / New training, better CNN ! | 05/05/19
 - v1.2 : Multiple grids baby ! | 02/05/19
-- v1.1 : Use probabilistic Hough & detect grid better | 01/054/19
+- v1.1 : Use probabilistic Hough & detect grid better | 01/05/19
 - v1.0 : First version | 28/04/19
 
 [KivyMD repo]: https://github.com/kivymd/KivyMD

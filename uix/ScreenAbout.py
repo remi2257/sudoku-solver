@@ -8,4 +8,4 @@ class ScreenAbout(MDBottomNavigationItem):
         self.text = 'About'
         self.icon = 'help'
 
-        self.add_widget(MDLabel(text='About', halign='center'))
+        self.add_widget(MDLabel(text='Work In Progress', halign='center'))

@@ -1,4 +1,3 @@
-import os
 from time import time
 
 import cv2
@@ -23,7 +22,6 @@ def timer_decorator(func):
 def my_resize(image, width=None, height=None, inter=cv2.INTER_LINEAR):  # INTER_AREA
     # initialize the dimensions of the image to be resized and
     # grab the image size
-    dim = None
     (h, w) = image.shape[:2]
 
     # if both the width and height are None, then return the
@@ -109,6 +107,7 @@ def show_and_wait_close(window_name, image):
     """
     cv2.imshow(window_name, image)
     cv2.waitKey(0)
+
 
 def add_annotation_to_image(img, text, write_on_top=True):
     """

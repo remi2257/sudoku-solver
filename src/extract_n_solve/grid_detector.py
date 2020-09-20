@@ -3,29 +3,6 @@ import cv2
 from settings import *
 from src.solving_objects.MyHoughLines import *
 from src.solving_objects.MyHoughPLines import *
-from src.useful_functions import my_resize
-
-
-def flood_fill_grid(thresh):
-    max_area = -1
-    maxPt = (0, 0)
-    h_im, w_im = thresh.shape[:2]
-    t_copy = thresh.copy()
-    # grid = thresh.copy()
-    # mask = np.zeros((h_im + 2, w_im + 2), np.uint8)
-    for y in range(2, h_im - 2):
-        for x in range(2, w_im - 2):
-            if thresh[y][x] > 128:
-                # ret = cv2.floodFill(t_copy, mask, (x,y), 64)
-                ret = cv2.floodFill(t_copy, None, (x, y), 1)
-
-                area = ret[0]
-                if area > max_area:
-                    max_area = area
-                    maxPt = (x, y)
-
-    cv2.floodFill(t_copy, None, maxPt, 255)
-    return t_copy
 
 
 def line_intersection(my_line1, my_line2):
@@ -101,94 +78,6 @@ def find_corners(contour):
     return [top_left, top_right, bottom_right, bottom_left]
 
 
-def look_for_corners(img_lines, display=False):
-    if display:
-        # img_contours = np.zeros((img_lines.shape[0], img_lines.shape[1], 3), np.uint8)
-        img_contours = cv2.cvtColor(img_lines.copy(), cv2.COLOR_GRAY2BGR)
-    else:
-        img_contours = None
-
-    contours, _ = cv2.findContours(img_lines, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    best_contours = []
-    contours = sorted(contours, key=cv2.contourArea, reverse=True)
-
-    biggest_area = cv2.contourArea(contours[0])
-
-    for cnt in contours:
-        area = cv2.contourArea(cnt)
-        if area < smallest_area_allow:
-            break
-        if area > biggest_area / ratio_lim:
-            peri = cv2.arcLength(cnt, True)
-            approx = cv2.approxPolyDP(cnt, approx_poly_coef * peri, True)
-            if len(approx) == 4:
-                best_contours.append(approx)
-        if display:
-            cv2.drawContours(img_contours, [cnt], 0, (0, 255, 0), 2)
-
-    if not best_contours:
-        if not display:
-            return None
-        else:
-            return None, img_lines, img_contours
-    corners = []
-    for best_contour in best_contours:
-        corners.append(find_corners(best_contour))
-
-    if not display:
-        return corners
-    else:
-        for best_contour in best_contours:
-            cv2.drawContours(img_contours, [best_contour], 0, (0, 0, 255), 3)
-            for corner in corners:
-                for point in corner:
-                    x, y = point
-                    cv2.circle(img_contours, (x, y), 10, (255, 0, 0), 3)
-        return corners, img_lines, img_contours
-
-
-# @timer_decorator
-def get_lines_and_corners(img, edges, use_hough=False, display=False):
-    if use_hough:
-        # t0 = time.time()
-        my_lines = []
-        img_lines = np.zeros((img.shape[:2]), np.uint8)
-        # edges_resize = my_resize(edges, width=resize_width_hough,height=resize_height_hough)
-        # print(edges_resize.shape)
-        lines_raw = cv2.HoughLinesP(edges,
-                                    rho=hough_rho, theta=hough_theta,
-                                    threshold=thresh_hough_p,
-                                    minLineLength=minLineLength_h_p, maxLineGap=maxLineGap_h_p)
-        # t1 = time.time()
-
-        for line in lines_raw:
-            # my_lines.append(MyHoughPLines(line, ratio=ratio_resize_hough))
-            my_lines.append(MyHoughPLines(line))
-        # t2 = time.time()
-
-        for line in my_lines:
-            x1, y1, x2, y2 = line.get_limits()
-            cv2.line(img_lines, (x1, y1), (x2, y2), 255, 2)
-        # cv2.imshow('img_lines', img_lines)
-        # cv2.waitKey()
-        if display_line_on_edges:
-            show_trackbar_hough(edges)
-        # t3 = time.time()
-        #
-        # total_time = t3 - t0
-        # prepro_time = t1 - t0
-        # print("INSIDE Hough Transfrom \t{:.1f}% - {:.3f}s".format(100 * prepro_time / total_time, prepro_time))
-        # hough_time = t2 - t1
-        # print("INSIDE LINES \t\t{:.1f}% - {:.3f}s".format(100 * hough_time / total_time, hough_time))
-        # undistort_time = t3 - t2
-        # print("INSIDE DRAWS LINE \t{:.1f}% - {:.3f}s".format(100 * undistort_time / total_time, undistort_time))
-        # print("INSIDE EVERYTHING DONE \t{:.2f}s".format(total_time))
-
-    else:
-        img_lines = edges.copy()
-    return look_for_corners(img_lines, display)
-
-
 def get_hough_transform(img, edges, display=False):
     my_lines = []
     img_after_merge = img.copy()
@@ -217,51 +106,6 @@ def get_hough_transform(img, edges, display=False):
         return grid_limits
     else:
         return grid_limits, img, img_after_merge
-
-
-import time
-
-
-def get_undistorted_grids(frame, points_grids, ratio):
-    undistorted = []
-    true_points_grids = []
-    transfo_matrix = []
-    for points_grid in points_grids:
-        points_grid = np.array(points_grid, dtype=np.float32) * ratio
-        final_pts = np.array(
-            [[0, 0], [target_w_grid - 1, 0],
-             [target_w_grid - 1, target_h_grid - 1], [0, target_h_grid - 1]],
-            dtype=np.float32)
-        M = cv2.getPerspectiveTransform(points_grid, final_pts)
-        undistorted.append(cv2.warpPerspective(frame, M, (target_w_grid, target_h_grid)))
-        # cv2.imshow("test",undistorted[-1])
-        # cv2.waitKey()
-        true_points_grids.append(points_grid)
-        transfo_matrix.append(np.linalg.inv(M))
-    return undistorted, true_points_grids, transfo_matrix
-
-
-def main_grid_detector_img(frame, resized=True, display=False, using_webcam=False, use_hough=False):
-    if not resized:
-        frame_resize = my_resize(frame, width=param_resize_width, height=param_resize_height)
-    else:
-        frame_resize = frame
-    ratio = frame.shape[0] / frame_resize.shape[0]
-    prepro_im_edges = preprocess_im(frame_resize, using_webcam)
-
-    if display:
-        extreme_points_biased, img_lines, img_contour = get_lines_and_corners(frame_resize.copy(), prepro_im_edges,
-                                                                              use_hough=use_hough, display=display)
-        show_big_image(frame_resize, prepro_im_edges, img_lines, img_contour, use_hough)
-
-    else:
-        extreme_points_biased = get_lines_and_corners(frame_resize.copy(), prepro_im_edges, use_hough=use_hough,
-                                                      display=display)
-
-    if extreme_points_biased is None:
-        return None, None, None
-    grids_final, points_grids, transfo_matrix = get_undistorted_grids(frame, extreme_points_biased, ratio)
-    return grids_final, points_grids, transfo_matrix
 
 
 class GridDetector:
@@ -344,8 +188,8 @@ if __name__ == '__main__':
     # im_path = "images_test/izi_distord.jpg"
     im = cv2.imread(im_path)
     cv2.imshow("im", im)
-    res_grids_final, _, _ = main_grid_detector_img(im, resized=False, display=True,
-                                                   using_webcam=False, use_hough=True)
+    detector = GridDetector()
+    res_grids_final, _, _ = detector.extract_grids(im)
     if res_grids_final is not None:
         for (i, im_grid) in enumerate(res_grids_final):
             cv2.imshow('grid_final_{}'.format(i), im_grid)
